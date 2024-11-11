@@ -23,7 +23,7 @@ header:
       fr-LU   : *FR
       tr      : &TR       Arşivdekiler
       # @end locale config
-    url: /ddd-journey.md
+    url: /ddd-journey.html
 
   - titles:
       # @start locale config
@@ -49,7 +49,7 @@ header:
       fr-LU   : *FR
       tr      : &TR       Arşivdekiler
       # @end locale config
-    url: /ddd-journey.md
+    url: /other.html
 
   - titles:
       # @start locale config
@@ -75,4 +75,4 @@ header:
       fr-LU   : *FR
       tr      : &TR       Hakkında
       # @end locale config
-    url: /about.md
+    url: /about.html

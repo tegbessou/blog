@@ -8,15 +8,14 @@ aside:
   toc: true
 ---
 
-{% for post in site.posts %}
-## [{{ post.title }}]({{ post.url | relative_url }})
+# 🚧 Page en Construction 🚧
 
-*{{ post.date | date: "%d %B %Y" }}*
+Bienvenue sur mon blog dédié au **Domain-Driven Design (DDD)** et à l'**architecture logicielle**.
 
-{{ post.excerpt | strip_html | truncatewords: 50 }}
+Ce site est actuellement en cours de développement. Je travaille activement pour vous fournir prochainement du contenu de qualité sur ces sujets passionnants.
 
-[Lire la suite]({{ post.url | relative_url }})
+## À venir
 
----
-
-{% endfor %}
+- Articles détaillés sur le DDD
+- Bonnes pratiques en architecture logicielle
+- Tutoriels et exemples concrets
