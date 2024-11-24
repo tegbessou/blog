@@ -38,6 +38,13 @@
             <li><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></li>
           {%- endif -%}
         </ul>
+        <form id="language-switcher" action="" method="get">
+          <select name="lang" onchange="location = this.value;">
+            <option value="{{ site.baseurl_root }}/fr{{ page.url}}" {% if site.lang == 'fr' %}selected{% endif %}>Français</option>
+            <option value="{{ site.baseurl_root }}{{ page.url}}" {% if site.lang == 'en' %}selected{% endif %}>English</option>
+          </select>
+        </form>
+        {{ site.uri }}
       </nav>
       {%- endif -%}
     </div>

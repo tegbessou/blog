@@ -83,6 +83,9 @@
 }
 
 .navigation {
+  display: flex;
+  align-items: center;
+
   @include overflow(auto, "x");
   & > ul {
     height: map-get($layout, header-height);
@@ -120,4 +123,14 @@
   &::after {
     @include split-line(bottom, 4px, $main-color-1);
   }
+}
+
+#language-switcher {
+  display: inline-block;
+  margin-left: 10px;
+}
+
+#language-switcher select {
+  padding: 5px;
+  font-size: 14px;
 }

@@ -26,3 +26,57 @@
     max-width: 100%;
   }
 }
+
+.post-list {
+  list-style: none;
+  padding: 0;
+}
+
+.post-item {
+  margin-bottom: 40px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 20px;
+}
+
+.post-item h2 {
+  margin: 0 0 10px;
+  font-size: 24px;
+}
+
+.post-item h2 a {
+  text-decoration: none;
+  color: #333;
+}
+
+.post-item h2 a:hover {
+  color: #007acc;
+}
+
+.post-meta {
+  color: #777;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+.post-excerpt {
+  font-size: 16px;
+  color: #555;
+  margin-bottom: 15px;
+}
+
+.read-more {
+  text-decoration: none;
+  color: #007acc;
+  font-weight: bold;
+}
+
+.read-more:hover {
+  text-decoration: underline;
+}
+
+img[alt="Bienvenue sur mon blog"] {
+  width: 100%;
+  height: auto;
+  max-height: 350px; 
+  object-fit: cover;
+}

@@ -78,6 +78,8 @@ GEM
       webrick (~> 1.7)
     jekyll-feed (0.17.0)
       jekyll (>= 3.7, < 5.0)
+    jekyll-multiple-languages-plugin (1.8.0)
+      jekyll (>= 2.0, < 5.0)
     jekyll-paginate (1.1.0)
     jekyll-sass-converter (3.0.0)
       sass-embedded (~> 1.54)
@@ -197,6 +199,7 @@ PLATFORMS
 
 DEPENDENCIES
   bundler
+  jekyll-multiple-languages-plugin
   jekyll-text-theme!
   rake (~> 13.0)
 

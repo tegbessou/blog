@@ -2,7 +2,13 @@
     <div class="sidebar-profile">
         <img src="/assets/images/me.png" alt="{{ site.author.name }}" class="sidebar-avatar">
         <h2 class="sidebar-name">{{ site.author.name }}</h2>
-        <p class="sidebar-bio">{{ site.author.bio }}</p>
+
+        <p class="sidebar-bio">
+            {% if site.lang == 'fr' %}
+                {{ site.author.bio }}
+            {% else %}
+                Web developer, lead developer, and software architecture enthusiast.
+            {% endif %}
     </div>
     <div class="sidebar-social">
         <ul class="social-icons">
