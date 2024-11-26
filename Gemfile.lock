@@ -199,7 +199,6 @@ PLATFORMS
 
 DEPENDENCIES
   bundler
-  jekyll
   jekyll-multiple-languages-plugin
   jekyll-text-theme!
   rake (~> 13.0)
