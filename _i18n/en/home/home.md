@@ -6,19 +6,19 @@ I am **Hugues Gobet**, a developer passionate about **TDD**, **DDD**, and progra
 
 <br><br>
 
-### Latest Posts (coming soon)
+### Latest Posts
 
 ---
 <br>
 <ul class="post-list">
   {% for post in site.posts %}
     <li class="post-item">
-      <h2><a href="{{ post.url }}">{{ post.title }}</a></h2>
-      <p class="post-meta">Publié le {{ post.date | date: "%d %B %Y" }}</p>
+      <h2><a href="{{ post.permalink }}">{{ post.title }}</a></h2>
+      <p class="post-meta">Publish at {{ post.date | date: "%d %B %Y" }}</p>
       <p class="post-excerpt">
-        {{ post.excerpt }}
+        {{ post.resume }}
       </p>
-      <a class="read-more" href="{{ post.url }}">Lire la suite &rarr;</a>
+      <a class="read-more" href="{{ post.permalink }}">Read &rarr;</a>
     </li>
   {% endfor %}
 </ul>

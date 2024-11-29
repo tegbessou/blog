@@ -204,7 +204,7 @@ exclude:
 
 defaults:
   - scope:
-      path: "_posts"
+      path: ""
       type: posts
     values:
       layout: article
@@ -217,6 +217,7 @@ defaults:
       pageview: true
 
 languages: ["en", "fr"]
+default_lang: "fr"
 
 ## => Plugins
 ##############################

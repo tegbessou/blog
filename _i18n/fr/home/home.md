@@ -6,19 +6,19 @@ Je suis **Hugues Gobet**, développeur passionné par le **TDD**, le **DDD** et 
 
 <br><br>
 
-### Dernières sorties (arrive bientôt)
+### Dernières sorties
 
 ---
 <br>
 <ul class="post-list">
   {% for post in site.posts %}
     <li class="post-item">
-      <h2><a href="{{ post.url }}">{{ post.title }}</a></h2>
+      <h2><a href="/fr{{ post.permalink }}">{{ post.title }}</a></h2>
       <p class="post-meta">Publié le {{ post.date | date: "%d %B %Y" }}</p>
       <p class="post-excerpt">
-        {{ post.excerpt }}
+        {{ post.resume }}
       </p>
-      <a class="read-more" href="{{ post.url }}">Lire la suite &rarr;</a>
+      <a class="read-more" href="/fr{{ post.permalink }}">Lire la suite &rarr;</a>
     </li>
   {% endfor %}
 </ul>

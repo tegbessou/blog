@@ -6,14 +6,14 @@ Bienvenue sur cette page dédiée à mon **journal de bord du Domain-Driven Desi
 <br>
 <ul class="post-list">
     {% for post in site.posts %}
-        {% if post.tags contains 'ddd-journey' %}
+        {% if post.categories contains 'ddd-logbook' %}
             <li class="post-item">
-            <h2><a href="{{ post.url }}">{{ post.title }}</a></h2>
+            <h2><a href="/fr/{{ post.permalink }}">{{ post.title }}</a></h2>
             <p class="post-meta">Publié le {{ post.date | date: "%d %B %Y" }}</p>
             <p class="post-excerpt">
-                {{ post.excerpt }}
+                {{ post.resume }}
             </p>
-            <a class="read-more" href="{{ post.url }}">Lire la suite &rarr;</a>
+            <a class="read-more" href="/fr/{{ post.permalink }}">Lire la suite &rarr;</a>
             </li>
         {% endif %}
     {% endfor %}

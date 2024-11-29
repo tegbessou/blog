@@ -6,14 +6,14 @@ Welcome to this page dedicated to my **Domain-Driven Design (DDD) logbook**. Her
 <br>
 <ul class="post-list">
     {% for post in site.posts %}
-        {% if post.tags contains 'ddd-journey' %}
+        {% if post.categories contains 'ddd-logbook' %}
             <li class="post-item">
-            <h2><a href="{{ post.url }}">{{ post.title }}</a></h2>
+            <h2><a href="{{ post.permalink }}">{{ post.title }}</a></h2>
             <p class="post-meta">Post at {{ post.date | date: "%d %B %Y" }}</p>
             <p class="post-excerpt">
-                {{ post.excerpt }}
+                {{ post.resume }}
             </p>
-            <a class="read-more" href="{{ post.url }}">Read &rarr;</a>
+            <a class="read-more" href="{{ post.permalink }}">Read &rarr;</a>
             </li>
         {% endif %}
     {% endfor %}
