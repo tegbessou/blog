@@ -37,6 +37,8 @@ After a month, I had nearly as many questions as answers. To deepen my understan
 
 While working on this project, I also read *Implementing Domain-Driven Design* by *Vaughn Vernon*, which further enhanced my approach to **DDD**.
 
+![Books](/assets/images/2024-12-02/en.png)
+
 ## Ubiquitous Language
 
 A key concept in **DDD**, the **Ubiquitous Language** refers to the terms related to the **business domain**. It lies at the heart of the system and should be developed through collaboration between developers and domain experts.

@@ -40,6 +40,8 @@ Après un mois, j’avais presque autant de questions que de réponses. J’ai d
 
 Tout en avançant sur mon premier projet, j’ai lu *Implementing Domain Driven Design*, de *Vernon Vaughn*, qui a enrichi mon approche du **DDD**.
 
+![Livres](/assets/images/2024-12-02/fr.png)
+
 ## Ubiquitous Language
 
 Terme clé du **DDD**, l’**Ubiquitous Language** représente les termes liés au métier de votre domaine. Il est le cœur de votre système et doit être développé grâce à une collaboration entre les développeurs et les experts métiers.
