@@ -1,7 +1,7 @@
 ---
 layout: article
 title: "Journal de bord de l’apprentissage du Domain-Driven Design : Jour 1"
-date:   2024-12-02 16:00:00
+date:   2024-12-02 15:00:00
 categories: ddd-logbook
 lang: fr
 resume: "Dans ce premier jour de mon journal de bord sur le Domain-Driven Design, je partage mes découvertes initiales et mon parcours d'apprentissage de cette approche centrée sur le domaine métier pour la conception de logiciels complexes. Rejoignez-moi pour explorer les concepts fondamentaux du DDD, ses bonnes pratiques et les leçons tirées de mes expériences personnelles."

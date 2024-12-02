@@ -1,7 +1,7 @@
 ---
 layout: article
 title: "Logbook of Learning Domain-Driven Design: Day 1"
-date:   2024-12-02 16:00:00
+date:   2024-12-02 15:00:00
 categories: ddd-logbook
 lang: en
 resume: "On this first day of my logbook on Domain-Driven Design, I share my initial discoveries and learning journey of this domain-focused approach to designing complex software. Join me as we explore the fundamental concepts of DDD, its best practices, and lessons learned from my personal experiences."
