@@ -1,0 +1,720 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="fr"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://huguesgobet.com/feed.xml" rel="self" type="application/atom+xml" /><link href="https://huguesgobet.com/" rel="alternate" type="text/html" hreflang="fr" /><updated>2024-12-16T17:07:07+00:00</updated><id>https://huguesgobet.com/feed.xml</id><title type="html">Blog - Hugues Gobet</title><subtitle>Your Site Description
+</subtitle><author><name>Hugues Gobet</name><email>hugues.gobet@gmail.com</email></author><entry xml:lang="fr"><title type="html">La pagination : besoin métier ou besoin technique ?</title><link href="https://huguesgobet.com/other/2024-12-16" rel="alternate" type="text/html" title="La pagination : besoin métier ou besoin technique ?" /><published>2024-12-16T14:00:00+00:00</published><updated>2024-12-16T14:00:00+00:00</updated><id>https://huguesgobet.com/other/pagination-besoin-metier-ou-technique</id><content type="html" xml:base="https://huguesgobet.com/other/2024-12-16"><![CDATA[<p>Lors du développement d’une application pour un site e-commerce, j’ai récemment rencontré un problème épineux : comment gérer la pagination des produits tout en respectant les principes du <strong>Domain-Driven Design (DDD)</strong>, de l’<strong>Architecture Hexagonale</strong> et du <strong>Command Query Responsibility Segregation (CQRS)</strong> ? Je me suis longtemps demandé si la pagination devait faire partie du <strong>Domaine</strong>, et si non, comment faire le lien entre la couche <strong>Infrastructure</strong>, ou la couche <strong>Application</strong>, et le <strong>Repository</strong> qui se trouve dans la couche <strong>Domaine</strong>. Comment alors respecter les règles des architectures qu’on a choisi d’utiliser ? Je vous livre dans cet article mon cheminement et mes analyses.</p>
+
+<h2 id="rappel-des-différentes-méthodologies-de-développement-utilisées">Rappel des différentes méthodologies de développement utilisées</h2>
+
+<h3 id="domain-driven-design"><strong>Domain-Driven Design</strong></h3>
+
+<p>Le <strong>DDD</strong> est une approche de développement logiciel qui place le <strong>Domaine</strong> métier au cœur du développement. Pour cela, on utilise plusieurs patterns logiciels, comme par exemple les <strong>Entity</strong>, les <strong>Aggregate</strong>, les <strong>Value Object</strong>, les <strong>Repository</strong>… Cependant, utiliser seulement les patterns techniques est une mauvaise utilisation du <strong>DDD</strong>. En effet, l’essentiel réside dans l’utilisation de l’<strong>Ubiquitous Language</strong> et dans la modélisation du <strong>Domaine</strong>. Le <strong>DDD</strong> encourage une collaboration étroite entre les développeurs et les experts métier pour créer un modèle commun. De plus, le concept de <strong>Bounded Context</strong> est essentiel pour délimiter les sous-domaines et gérer la complexité du système.</p>
+
+<h3 id="architecture-hexagonale"><strong>Architecture Hexagonale</strong></h3>
+
+<p>L’<strong>Architecture Hexagonale</strong> (aussi connue sous le nom d’architecture Port/Adapter) prône la séparation d’une application en plusieurs couches et vise à rendre le <strong>Domaine</strong> indépendant de l’extérieur (base de données, framework…). Deux couches sont obligatoires : le <strong>Domaine</strong>, avec le code métier (les <strong>Entity</strong>, les <strong>Aggregate</strong>, les <strong>Value Object</strong>, les <strong>Repository</strong>…), et l’<strong>Infrastructure</strong>, qui gère les communications avec l’extérieur grâce aux Adapters d’entrées (les <strong><em>Controllers</em></strong>) et aux Adapters de sorties (les <strong>Repository</strong>).</p>
+
+<p>Les deux couches communiquent en utilisant l’inversion de dépendance. On définit une interface dans le <strong>Domaine</strong> (par exemple un <strong>Repository</strong>, avec la méthode <strong><em>Add</em></strong>) et l’<strong>Infrastructure</strong> fournit l’implémentation de la méthode <strong><em>Add</em></strong> du <strong>Repository</strong> pour enregistrer la nouvelle <strong>Entity</strong> en base de données.</p>
+
+<p><img src="/assets/images/2024-12-16/hexagonal-architecture.png" alt="Architecture héxagonale" /></p>
+
+<h3 id="command-query-responsibility-segregation-cqrs"><strong>Command Query Responsibility Segregation (CQRS)</strong></h3>
+
+<p>Le <strong>CQRS</strong> est un pattern qui stipule que toute action sur le système est soit une <strong>Query</strong> (pour lire dans le système) soit une <strong>Command</strong> (pour effectuer une action et modifier le système). Une <strong>Command</strong> ne retourne rien ou l’identifiant de la ressource créée. Le <strong>CQRS</strong> impose aussi de séparer le modèle d’écriture et le modèle de lecture.</p>
+
+<p><img src="/assets/images/2024-12-16/cqrs.png" alt="CQRS" /></p>
+
+<h2 id="cas-pratique-liste-de-produits-paginée-pour-un-site-de-e-commerce">Cas pratique : liste de produits paginée pour un site de e-commerce</h2>
+
+<p>Pour cet article, je vais prendre comme exemple un cas classique pour les sites de e-commerce : une liste de <u>produits</u> paginée sur laquelle on peut faire une recherche par <u>nom de produits</u>. J’exposerai ensuite pourquoi la solution peut sembler simple mais qu’elle soulève une question.</p>
+
+<p><img src="/assets/images/2024-12-16/fr-use-case-product.png" alt="Cas d'usage pour la lecture d'un produit" /></p>
+
+<h2 id="mise-en-œuvre-initiale">Mise en œuvre initiale</h2>
+
+<p>Pour commencer, j’ai créé une <strong>Entity</strong> <u>Produit</u> dans le <strong>Domaine</strong> :</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+</pre></td><td class="code"><pre><span class="kn">namespace</span> <span class="nn">App\Domain\Entity</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="kd">class</span> <span class="nc">Product</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">private</span> <span class="kt">ProductId</span> <span class="nv">$id</span><span class="p">,</span>
+        <span class="k">private</span> <span class="kt">ProductName</span> <span class="nv">$name</span><span class="p">,</span>
+        <span class="k">private</span> <span class="kt">ProductPrice</span> <span class="nv">$price</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">id</span><span class="p">():</span> <span class="kt">ProductId</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">id</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">name</span><span class="p">():</span> <span class="kt">ProductName</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">price</span><span class="p">():</span> <span class="kt">ProductPrice</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">price</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>L’<u>id</u>, le <u>name</u> et le <u>price</u> sont tous les trois des <strong>Value Object</strong>.</p>
+
+<p>L’interface du <strong>Repository</strong> fait aussi partie du <strong>Domaine</strong> :</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+</pre></td><td class="code"><pre><span class="kn">namespace</span> <span class="nn">App\Domain\Repository</span><span class="p">;</span>
+
+<span class="kn">use</span> <span class="nc">App\Domain\Entity\Product</span><span class="p">;</span>
+<span class="kn">use</span> <span class="nc">App\Domain\ValueObject\ProductName</span><span class="p">;</span>
+
+<span class="kd">interface</span> <span class="nc">ProductRepository</span>
+<span class="p">{</span>
+    <span class="cd">/**
+     * @return Product[]
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">getProductsWithName</span><span class="p">(</span><span class="kt">ProductName</span> <span class="nv">$name</span><span class="p">,</span> <span class="kt">int</span> <span class="nv">$itemPerPage</span><span class="p">,</span> <span class="kt">int</span> <span class="nv">$page</span><span class="p">):</span> <span class="kt">array</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Je ne parlerai pas de l’implémentation de cette interface dans cet article, car cela n’a aucun intérêt pour traiter le sujet du jour.</p>
+
+<p>La <strong>Query</strong> et le <strong>QueryHandler</strong>, qui sont en charge de formater et de faire le lien entre le <strong>Domaine</strong> et l’extérieur, peuvent se trouver soit dans la couche <strong>Infrastructure</strong>, soit dans la couche <strong>Application</strong>. Pour éviter de rajouter une couche dans cet exemple, je les ai mis dans la couche <strong>Infrastructure</strong>, même si personnellement je préfère les mettre dans la couche <strong>Application</strong>.</p>
+
+<p>Voici la <strong>Query</strong> :</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+</pre></td><td class="code"><pre><span class="kn">namespace</span> <span class="nn">App\Infrastructure\Query</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">ListProductsWithNameQuery</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="nv">$name</span><span class="p">,</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="nv">$itemPerPage</span><span class="p">,</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="nv">$page</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Et le <strong>QueryHandler</strong> :</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+</pre></td><td class="code"><pre><span class="kn">namespace</span> <span class="nn">App\Infrastructure\Query</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">ListProductsWithNameQueryHandler</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">private</span> <span class="kt">ProductRepository</span> <span class="nv">$productRepository</span>
+    <span class="p">)</span> <span class="p">{}</span>
+
+    <span class="cd">/**
+     * @return Product[]
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__invoke</span><span class="p">(</span><span class="kt">ListProductsWithNameQuery</span> <span class="nv">$query</span><span class="p">):</span> <span class="kt">array</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">productRepository</span><span class="o">-&gt;</span><span class="nf">getProductsWithName</span><span class="p">(</span>
+            <span class="nc">ProductName</span><span class="o">::</span><span class="nf">fromString</span><span class="p">(</span><span class="nv">$query</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">),</span>
+            <span class="nv">$query</span><span class="o">-&gt;</span><span class="n">itemPerPage</span><span class="p">,</span>
+            <span class="nv">$query</span><span class="o">-&gt;</span><span class="n">page</span>
+        <span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>J’ai placé le <strong><em>Controller</em></strong> dans la couche <strong>Infrastructure</strong>. Il a pour but de transformer ce qui vient de la requête HTTP en <strong>Query</strong> pour ensuite la dispatcher.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+</pre></td><td class="code"><pre><span class="kn">namespace</span> <span class="nn">App\Infrastructure\Controller</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="kd">class</span> <span class="nc">ProductController</span> <span class="kd">extends</span> <span class="nc">AbstractController</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">private</span> <span class="k">readonly</span> <span class="kt">QueryBus</span> <span class="nv">$queryBus</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__invoke</span><span class="p">(</span><span class="kt">Request</span> <span class="nv">$request</span><span class="p">):</span> <span class="kt">Response</span>
+    <span class="p">{</span>
+        <span class="nv">$products</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">queryBus</span><span class="o">-&gt;</span><span class="nf">ask</span><span class="p">(</span>
+            <span class="k">new</span> <span class="nc">ListProductsWithNameQuery</span><span class="p">(</span>
+                <span class="nv">$request</span><span class="o">-&gt;</span><span class="n">query</span><span class="o">-&gt;</span><span class="nf">get</span><span class="p">(</span><span class="s1">'name'</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">int</span><span class="p">)</span> <span class="nv">$request</span><span class="o">-&gt;</span><span class="n">query</span><span class="o">-&gt;</span><span class="nf">get</span><span class="p">(</span><span class="s1">'itemPerPage'</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">int</span><span class="p">)</span> <span class="nv">$request</span><span class="o">-&gt;</span><span class="n">query</span><span class="o">-&gt;</span><span class="nf">get</span><span class="p">(</span><span class="s1">'page'</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">);</span>
+
+        <span class="nv">$paginatedProduct</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">PaginatedProduct</span><span class="p">(</span>
+            <span class="n">products</span><span class="o">:</span> <span class="nv">$products</span><span class="p">,</span>
+            <span class="n">total</span><span class="o">:</span> <span class="nb">count</span><span class="p">(</span><span class="nv">$products</span><span class="p">),</span>
+            <span class="n">page</span><span class="o">:</span> <span class="p">(</span><span class="n">int</span><span class="p">)</span> <span class="nv">$request</span><span class="o">-&gt;</span><span class="n">query</span><span class="o">-&gt;</span><span class="nf">get</span><span class="p">(</span><span class="s1">'page'</span><span class="p">),</span>
+        <span class="p">);</span>
+
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="nf">json</span><span class="p">(</span><span class="nv">$paginatedProduct</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<h2 id="analyse-de-la-mise-en-œuvre">Analyse de la mise en œuvre</h2>
+
+<p>Cet exemple d’implémentation d’une recherche de <u>produit</u> paginé respecte la séparation des couches de l’<strong>Architecture Hexagonale</strong> : le code métier est bien séparé de la couche <strong>Infrastructure</strong>. Il respecte aussi une partie du <strong>CQRS</strong> puisque je passe par une <strong>Query</strong> pour interroger le système.</p>
+
+<p>En revanche, le modèle de lecture n’est pas séparé du modèle d’écriture, ce qui est un non-respect du <strong>CQRS</strong>. J’ai initialement pensé que ce n’était pas grave jusqu’à ce que cela induise une erreur : mon <strong>Domaine</strong> est pollué par des notions de la couche <strong>Infrastructure</strong> (ou de présentation). La pagination n’étant pas une partie du <strong>Domaine</strong>, elle ne lui apporte aucune valeur et peut changer en fonction de l’Adapter primaire (HTTP, Console…). Le filtre par nom, quant à lui, est un use case métier, mais il n’apporte pas grand-chose au <strong>Domaine</strong> et fait aussi partie de la couche de présentation.</p>
+
+<p>Mais alors, comment gérer la pagination sans polluer mon <strong>Domaine</strong> ?</p>
+
+<p>Ce n’est certainement pas la seule façon de faire, mais j’ai choisi de me conformer au <strong>CQRS</strong> complètement et de séparer le modèle d’écriture du modèle de lecture. J’ai donc déplacé le modèle de lecture dans la couche <strong>Infrastructure</strong> (ou la couche <strong>Application</strong>) ; il peut même être extrait du projet qui gère le <strong>Domaine</strong> des <u>produits</u>. Pour cela, à chaque action sur le modèle (création, modification ou suppression d’<strong>Aggregate</strong> ou d’<strong>Entity</strong>), je le répercute dans le modèle de lecture.</p>
+
+<h2 id="avantages-de-cette-approche">Avantages de cette approche</h2>
+
+<ul>
+  <li>Ce modèle de lecture est adapté à un besoin de présentation. Vous n’êtes donc pas contraints de sauvegarder les données de l’<strong>Aggregate</strong> ou de l’<strong>Entity</strong> si vous n’en avez pas besoin.</li>
+  <li>Vous n’êtes pas obligés de respecter la structure de votre modèle d’écriture. Par exemple, si vous gérez une <u>soirée</u> avec des <u>invitations</u> et que vous devez filtrer ces <u>invitations</u> pour n’afficher que celles correspondant à un utilisateur spécifique, vous créez un modèle dédié aux <u>invitations</u> dans votre modèle de lecture et vous y incluez toutes les informations nécessaires (qu’elles proviennent de la <u>soirée</u> ou de l’<u>invitation</u>). La duplication des données n’a ici aucune importance.</li>
+  <li>Pas de contrainte de stockage du modèle. Vous pouvez utiliser le même serveur pour mutualiser les coûts, je recommande juste de séparer les bases de données pour une séparation physique minimale. Vous pouvez également utiliser un stockage adapté comme Elasticsearch ou MongoDB. Cette problématique ne concernant pas l’Architecture du logiciel, je n’en parlerai pas plus dans cet article.</li>
+</ul>
+
+<h2 id="mise-en-œuvre-de-cette-solution">Mise en œuvre de cette solution</h2>
+
+<p>Je vais détailler ici les différentes étapes que j’ai mises en œuvre afin de séparer le modèle d’écriture et le modèle de lecture.</p>
+
+<h3 id="transformation-de-modèle-décriture-en-modèle-de-lecture">Transformation de modèle d’écriture en modèle de lecture</h3>
+
+<p>J’utilise pour cela les <strong>événements du Domaine</strong> et les <strong>Projections</strong>.</p>
+
+<ul>
+  <li>Qu’est-ce qu’un <strong>événement du Domaine</strong> ? C’est un événement dispatché quand une action se produit dans le <strong>Domaine</strong>. Par exemple, lors de la création d’un <u>produit</u>, on dispatche un événement <u>produit créé</u>.</li>
+  <li>Qu’est-ce qu’une <strong>Projection</strong> ? C’est le fait de projeter le modèle d’écriture dans le modèle de lecture. C’est une partie de la couche <strong>Infrastructure</strong> ou de la couche <strong>Application</strong>. Une <strong>Projection</strong> est appelée en réponse à l’événement émis par le <strong>Domaine</strong>.</li>
+</ul>
+
+<h3 id="création-du-modèle-de-lecture">Création du modèle de lecture</h3>
+
+<p>Je vais maintenant présenter la création du modèle de lecture et ensuite la partie lecture transformée pour utiliser le Read Model.</p>
+
+<p><img src="/assets/images/2024-12-16/fr-use-case-create-read-model-product.png" alt="Cas d'usage pour la création du modèle de lecture d'un produit" /></p>
+
+<p>Voici l’<strong>Entity</strong> <u>Product</u> avec l’enregistrement de l’évènement lors de la création du <u>Product</u> :</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+</pre></td><td class="code"><pre><span class="kn">namespace</span> <span class="nn">App\Domain\Entity</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="kd">class</span> <span class="nc">Product</span> <span class="kd">extends</span> <span class="nc">Aggregate</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">private</span> <span class="kt">ProductId</span> <span class="nv">$id</span><span class="p">,</span>
+        <span class="k">private</span> <span class="kt">ProductName</span> <span class="nv">$name</span><span class="p">,</span>
+        <span class="k">private</span> <span class="kt">ProductPrice</span> <span class="nv">$price</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">create</span><span class="p">(</span>
+        <span class="kt">ProductId</span> <span class="nv">$id</span><span class="p">,</span>
+        <span class="kt">ProductName</span> <span class="nv">$name</span><span class="p">,</span>
+        <span class="kt">ProductPrice</span> <span class="nv">$price</span><span class="p">,</span>
+    <span class="p">):</span> <span class="kt">self</span> <span class="p">{</span>
+        <span class="nv">$product</span> <span class="o">=</span>  <span class="k">new</span> <span class="nc">self</span><span class="p">(</span>
+            <span class="nv">$id</span><span class="p">,</span>
+            <span class="nv">$name</span><span class="p">,</span>
+            <span class="nv">$price</span><span class="p">,</span>
+        <span class="p">);</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="nf">record</span><span class="p">(</span><span class="k">new</span> <span class="nc">ProductCreated</span><span class="p">(</span>
+            <span class="nv">$id</span><span class="o">-&gt;</span><span class="nf">value</span><span class="p">(),</span>
+            <span class="nv">$name</span><span class="o">-&gt;</span><span class="nf">value</span><span class="p">(),</span>
+            <span class="nv">$price</span><span class="o">-&gt;</span><span class="nf">value</span><span class="p">(),</span>
+        <span class="p">));</span>
+
+        <span class="k">return</span> <span class="nv">$product</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">id</span><span class="p">():</span> <span class="kt">ProductId</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">id</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">name</span><span class="p">():</span> <span class="kt">ProductName</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">price</span><span class="p">():</span> <span class="kt">ProductPrice</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">price</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Voilà la <strong>Projection</strong> qui peut soit être appelée, soit être déjà présente dans un <strong><em>EventListener</em></strong> ou un <strong><em>MessageHandler</em></strong>. Pour le besoin d’un exemple court, j’ai mis le code directement dans l’<strong><em>EventListener</em></strong>. Je recommande de le sortir dans une classe dédiée.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+</pre></td><td class="code"><pre><span class="kn">namespace</span> <span class="nn">App\Infrastructure\Projection</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">CreateProductProjection</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">private</span> <span class="kt">ProductAdapterInterface</span> <span class="nv">$productAdapter</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__invoke</span><span class="p">(</span><span class="kt">ProductCreated</span> <span class="nv">$event</span><span class="p">):</span> <span class="kt">void</span>
+    <span class="p">{</span>
+        <span class="nv">$product</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Product</span><span class="p">(</span>
+            <span class="nv">$event</span><span class="o">-&gt;</span><span class="n">productId</span><span class="p">,</span>
+            <span class="nv">$event</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span>
+            <span class="nv">$event</span><span class="o">-&gt;</span><span class="n">price</span><span class="p">,</span>
+        <span class="p">);</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">productAdapter</span><span class="o">-&gt;</span><span class="nf">add</span><span class="p">(</span><span class="nv">$product</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Voilà l’Adapter qui sera en charge de stocker les données dans le modèle de lecture :</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+</pre></td><td class="code"><pre><span class="kn">namespace</span> <span class="nn">App\Infrastructure\Adapter</span><span class="p">;</span>
+
+<span class="kd">interface</span> <span class="nc">ProductAdapterInterface</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">add</span><span class="p">(</span><span class="kt">Product</span> <span class="nv">$product</span><span class="p">):</span> <span class="kt">void</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>L’implémentation dépendra de la solution que vous choisirez.</p>
+
+<p>Voici à quoi ressemble le modèle de lecture du <u>Product</u> :</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+</pre></td><td class="code"><pre><span class="kn">namespace</span> <span class="nn">App\Infrastructure\ReadModel</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">Product</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="nv">$id</span><span class="p">,</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="nv">$name</span><span class="p">,</span>
+        <span class="k">public</span> <span class="kt">float</span> <span class="nv">$price</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Le modèle de lecture est désormais prêt, il faut maintenant l’interroger.</p>
+
+<h3 id="interrogation-du-modèle-de-lecture">Interrogation du modèle de lecture</h3>
+
+<p>Pour cela, j’ai repris le schéma du Use Case que j’ai un peu modifié :</p>
+
+<p><img src="/assets/images/2024-12-16/fr-use-case-list-product.png" alt="Cas d'usage pour la lecture d'un produit" /></p>
+
+<p>L’Adapter de lecture ne se trouve donc maintenant plus dans le <strong>Domaine</strong>, mais dans la couche <strong>Infrastructure</strong>.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+</pre></td><td class="code"><pre><span class="kn">namespace</span> <span class="nn">App\Infrastructure\Adapter</span><span class="p">;</span>
+
+<span class="kd">interface</span> <span class="nc">ProductAdapterInterface</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">add</span><span class="p">(</span><span class="kt">Product</span> <span class="nv">$product</span><span class="p">):</span> <span class="kt">void</span><span class="p">;</span>
+
+    <span class="cd">/**
+     * @return Product[]
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">getProductsWithName</span><span class="p">(</span><span class="kt">string</span> <span class="nv">$name</span><span class="p">,</span> <span class="kt">int</span> <span class="nv">$itemPerPage</span><span class="p">,</span> <span class="kt">int</span> <span class="nv">$page</span><span class="p">):</span> <span class="kt">array</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>L’Adapter est donc en charge de lire le modèle de lecture, on y retrouve la méthode qui était dans le <strong>Repository</strong> de l’exemple précédent. J’ai modifié le paramètre <u>name</u>, pour que ce ne soit plus qu’une simple String. Puisqu’on est en dehors du <strong>Domaine</strong>, il n’est plus nécessaire que ce soit un <strong>Value Object</strong>.</p>
+
+<p>La <strong>Query</strong> ne change pas :</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+</pre></td><td class="code"><pre><span class="kn">namespace</span> <span class="nn">App\Infrastructure\Query</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">ListProductsWithNameQuery</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="nv">$name</span><span class="p">,</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="nv">$itemPerPage</span><span class="p">,</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="nv">$page</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Dorénavant, le <strong>QueryHandler</strong> n’appellera plus le <strong>Repository</strong> du <strong>Domaine</strong> mais l’Adapter qui lit dans le Read Model :</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+</pre></td><td class="code"><pre><span class="kn">namespace</span> <span class="nn">App\Infrastructure\Query</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">ListProductsWithNameQueryHandler</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">private</span> <span class="kt">ProductAdapterInterface</span> <span class="nv">$productAdapter</span>
+    <span class="p">)</span> <span class="p">{}</span>
+
+    <span class="cd">/**
+     * @return Product[]
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__invoke</span><span class="p">(</span><span class="kt">ListProductsWithNameQuery</span> <span class="nv">$query</span><span class="p">):</span> <span class="kt">array</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">productAdapter</span><span class="o">-&gt;</span><span class="nf">getProductsWithName</span><span class="p">(</span>
+            <span class="nv">$query</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span>
+            <span class="nv">$query</span><span class="o">-&gt;</span><span class="n">itemPerPage</span><span class="p">,</span>
+            <span class="nv">$query</span><span class="o">-&gt;</span><span class="n">page</span>
+        <span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Le <strong><em>Controller</em></strong> ne change pas non plus :</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+</pre></td><td class="code"><pre><span class="kn">namespace</span> <span class="nn">App\Infrastructure\Controller</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="kd">class</span> <span class="nc">ProductController</span> <span class="kd">extends</span> <span class="nc">AbstractController</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">private</span> <span class="k">readonly</span> <span class="kt">QueryBus</span> <span class="nv">$queryBus</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__invoke</span><span class="p">(</span><span class="kt">Request</span> <span class="nv">$request</span><span class="p">):</span> <span class="kt">Response</span>
+    <span class="p">{</span>
+        <span class="nv">$products</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">queryBus</span><span class="o">-&gt;</span><span class="nf">ask</span><span class="p">(</span>
+            <span class="k">new</span> <span class="nc">ListProductsWithNameQuery</span><span class="p">(</span>
+                <span class="nv">$request</span><span class="o">-&gt;</span><span class="n">query</span><span class="o">-&gt;</span><span class="nf">get</span><span class="p">(</span><span class="s1">'name'</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">int</span><span class="p">)</span> <span class="nv">$request</span><span class="o">-&gt;</span><span class="n">query</span><span class="o">-&gt;</span><span class="nf">get</span><span class="p">(</span><span class="s1">'itemPerPage'</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">int</span><span class="p">)</span> <span class="nv">$request</span><span class="o">-&gt;</span><span class="n">query</span><span class="o">-&gt;</span><span class="nf">get</span><span class="p">(</span><span class="s1">'page'</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">);</span>
+
+        <span class="nv">$paginatedProduct</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">PaginatedProduct</span><span class="p">(</span>
+            <span class="n">products</span><span class="o">:</span> <span class="nv">$products</span><span class="p">,</span>
+            <span class="n">total</span><span class="o">:</span> <span class="nb">count</span><span class="p">(</span><span class="nv">$products</span><span class="p">),</span>
+            <span class="n">page</span><span class="o">:</span> <span class="p">(</span><span class="n">int</span><span class="p">)</span> <span class="nv">$request</span><span class="o">-&gt;</span><span class="n">query</span><span class="o">-&gt;</span><span class="nf">get</span><span class="p">(</span><span class="s1">'page'</span><span class="p">),</span>
+        <span class="p">);</span>
+
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="nf">json</span><span class="p">(</span><span class="nv">$paginatedProduct</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>J’ai tenté de répondre à la question : la pagination est-elle un besoin métier ou un besoin technique ? De ce qu’on a vu, la pagination fait partie des use cases métier mais ne relève pas de la responsabilité du <strong>Domaine</strong>. Il est donc nécessaire de l’intégrer en dissociant le modèle de lecture du modèle du <strong>Domaine</strong>. Une telle approche permet de garder l’intégrité du <strong>Domaine</strong> en le maintenant à l’écart des problématiques qui ne relèvent pas de son périmètre.</p>
+
+<p>Pour les intéressés, vous pouvez retrouver tout le code de cet article sur <a href="https://github.com/tegbessou/ddd-pagination"><em>GitHub</em></a>. Vous y trouverez le code sans le Read Model ainsi que la dernière version.</p>
+
+<p>Je vous donne rendez-vous dans quinze jours pour un prochain article du Journal de Bord du <strong>DDD</strong>.</p>]]></content><author><name>Hugues Gobet</name><email>hugues.gobet@gmail.com</email></author><category term="other" /><summary type="html"><![CDATA[Lors du développement d’une application pour un site e-commerce, j’ai récemment rencontré un problème épineux : comment gérer la pagination des produits tout en respectant les principes du Domain-Driven Design (DDD), de l’Architecture Hexagonale et du Command Query Responsibility Segregation (CQRS) ? Je me suis longtemps demandé si la pagination devait faire partie du Domaine, et si non, comment faire le lien entre la couche Infrastructure, ou la couche Application, et le Repository qui se trouve dans la couche Domaine. Comment alors respecter les règles des architectures qu’on a choisi d’utiliser ? Je vous livre dans cet article mon cheminement et mes analyses. Rappel des différentes méthodologies de développement utilisées Domain-Driven Design Le DDD est une approche de développement logiciel qui place le Domaine métier au cœur du développement. Pour cela, on utilise plusieurs patterns logiciels, comme par exemple les Entity, les Aggregate, les Value Object, les Repository… Cependant, utiliser seulement les patterns techniques est une mauvaise utilisation du DDD. En effet, l’essentiel réside dans l’utilisation de l’Ubiquitous Language et dans la modélisation du Domaine. Le DDD encourage une collaboration étroite entre les développeurs et les experts métier pour créer un modèle commun. De plus, le concept de Bounded Context est essentiel pour délimiter les sous-domaines et gérer la complexité du système. Architecture Hexagonale L’Architecture Hexagonale (aussi connue sous le nom d’architecture Port/Adapter) prône la séparation d’une application en plusieurs couches et vise à rendre le Domaine indépendant de l’extérieur (base de données, framework…). Deux couches sont obligatoires : le Domaine, avec le code métier (les Entity, les Aggregate, les Value Object, les Repository…), et l’Infrastructure, qui gère les communications avec l’extérieur grâce aux Adapters d’entrées (les Controllers) et aux Adapters de sorties (les Repository). Les deux couches communiquent en utilisant l’inversion de dépendance. On définit une interface dans le Domaine (par exemple un Repository, avec la méthode Add) et l’Infrastructure fournit l’implémentation de la méthode Add du Repository pour enregistrer la nouvelle Entity en base de données. Command Query Responsibility Segregation (CQRS) Le CQRS est un pattern qui stipule que toute action sur le système est soit une Query (pour lire dans le système) soit une Command (pour effectuer une action et modifier le système). Une Command ne retourne rien ou l’identifiant de la ressource créée. Le CQRS impose aussi de séparer le modèle d’écriture et le modèle de lecture. Cas pratique : liste de produits paginée pour un site de e-commerce Pour cet article, je vais prendre comme exemple un cas classique pour les sites de e-commerce : une liste de produits paginée sur laquelle on peut faire une recherche par nom de produits. J’exposerai ensuite pourquoi la solution peut sembler simple mais qu’elle soulève une question. Mise en œuvre initiale Pour commencer, j’ai créé une Entity Produit dans le Domaine : 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 namespace App\Domain\Entity; final class Product { public function __construct( private ProductId $id, private ProductName $name, private ProductPrice $price, ) {} public function id(): ProductId { return $this-&gt;id; } public function name(): ProductName { return $this-&gt;name; } public function price(): ProductPrice { return $this-&gt;price; } } L’id, le name et le price sont tous les trois des Value Object. L’interface du Repository fait aussi partie du Domaine : 1 2 3 4 5 6 7 8 9 10 11 12 namespace App\Domain\Repository; use App\Domain\Entity\Product; use App\Domain\ValueObject\ProductName; interface ProductRepository { /** * @return Product[] */ public function getProductsWithName(ProductName $name, int $itemPerPage, int $page): array; } Je ne parlerai pas de l’implémentation de cette interface dans cet article, car cela n’a aucun intérêt pour traiter le sujet du jour. La Query et le QueryHandler, qui sont en charge de formater et de faire le lien entre le Domaine et l’extérieur, peuvent se trouver soit dans la couche Infrastructure, soit dans la couche Application. Pour éviter de rajouter une couche dans cet exemple, je les ai mis dans la couche Infrastructure, même si personnellement je préfère les mettre dans la couche Application. Voici la Query : 1 2 3 4 5 6 7 8 9 10 11 namespace App\Infrastructure\Query; final readonly class ListProductsWithNameQuery { public function __construct( public string $name, public int $itemPerPage, public int $page, ) { } } Et le QueryHandler : 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 namespace App\Infrastructure\Query; final readonly class ListProductsWithNameQueryHandler { public function __construct( private ProductRepository $productRepository ) {} /** * @return Product[] */ public function __invoke(ListProductsWithNameQuery $query): array { return $this-&gt;productRepository-&gt;getProductsWithName( ProductName::fromString($query-&gt;name), $query-&gt;itemPerPage, $query-&gt;page ); } } J’ai placé le Controller dans la couche Infrastructure. Il a pour but de transformer ce qui vient de la requête HTTP en Query pour ensuite la dispatcher. 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 namespace App\Infrastructure\Controller; final class ProductController extends AbstractController { public function __construct( private readonly QueryBus $queryBus, ) {} public function __invoke(Request $request): Response { $products = $this-&gt;queryBus-&gt;ask( new ListProductsWithNameQuery( $request-&gt;query-&gt;get('name'), (int) $request-&gt;query-&gt;get('itemPerPage'), (int) $request-&gt;query-&gt;get('page'), ) ); $paginatedProduct = new PaginatedProduct( products: $products, total: count($products), page: (int) $request-&gt;query-&gt;get('page'), ); return $this-&gt;json($paginatedProduct); } } Analyse de la mise en œuvre Cet exemple d’implémentation d’une recherche de produit paginé respecte la séparation des couches de l’Architecture Hexagonale : le code métier est bien séparé de la couche Infrastructure. Il respecte aussi une partie du CQRS puisque je passe par une Query pour interroger le système. En revanche, le modèle de lecture n’est pas séparé du modèle d’écriture, ce qui est un non-respect du CQRS. J’ai initialement pensé que ce n’était pas grave jusqu’à ce que cela induise une erreur : mon Domaine est pollué par des notions de la couche Infrastructure (ou de présentation). La pagination n’étant pas une partie du Domaine, elle ne lui apporte aucune valeur et peut changer en fonction de l’Adapter primaire (HTTP, Console…). Le filtre par nom, quant à lui, est un use case métier, mais il n’apporte pas grand-chose au Domaine et fait aussi partie de la couche de présentation. Mais alors, comment gérer la pagination sans polluer mon Domaine ? Ce n’est certainement pas la seule façon de faire, mais j’ai choisi de me conformer au CQRS complètement et de séparer le modèle d’écriture du modèle de lecture. J’ai donc déplacé le modèle de lecture dans la couche Infrastructure (ou la couche Application) ; il peut même être extrait du projet qui gère le Domaine des produits. Pour cela, à chaque action sur le modèle (création, modification ou suppression d’Aggregate ou d’Entity), je le répercute dans le modèle de lecture. Avantages de cette approche Ce modèle de lecture est adapté à un besoin de présentation. Vous n’êtes donc pas contraints de sauvegarder les données de l’Aggregate ou de l’Entity si vous n’en avez pas besoin. Vous n’êtes pas obligés de respecter la structure de votre modèle d’écriture. Par exemple, si vous gérez une soirée avec des invitations et que vous devez filtrer ces invitations pour n’afficher que celles correspondant à un utilisateur spécifique, vous créez un modèle dédié aux invitations dans votre modèle de lecture et vous y incluez toutes les informations nécessaires (qu’elles proviennent de la soirée ou de l’invitation). La duplication des données n’a ici aucune importance. Pas de contrainte de stockage du modèle. Vous pouvez utiliser le même serveur pour mutualiser les coûts, je recommande juste de séparer les bases de données pour une séparation physique minimale. Vous pouvez également utiliser un stockage adapté comme Elasticsearch ou MongoDB. Cette problématique ne concernant pas l’Architecture du logiciel, je n’en parlerai pas plus dans cet article. Mise en œuvre de cette solution Je vais détailler ici les différentes étapes que j’ai mises en œuvre afin de séparer le modèle d’écriture et le modèle de lecture. Transformation de modèle d’écriture en modèle de lecture J’utilise pour cela les événements du Domaine et les Projections. Qu’est-ce qu’un événement du Domaine ? C’est un événement dispatché quand une action se produit dans le Domaine. Par exemple, lors de la création d’un produit, on dispatche un événement produit créé. Qu’est-ce qu’une Projection ? C’est le fait de projeter le modèle d’écriture dans le modèle de lecture. C’est une partie de la couche Infrastructure ou de la couche Application. Une Projection est appelée en réponse à l’événement émis par le Domaine. Création du modèle de lecture Je vais maintenant présenter la création du modèle de lecture et ensuite la partie lecture transformée pour utiliser le Read Model. Voici l’Entity Product avec l’enregistrement de l’évènement lors de la création du Product : 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 namespace App\Domain\Entity; final class Product extends Aggregate { public function __construct( private ProductId $id, private ProductName $name, private ProductPrice $price, ) { } public function create( ProductId $id, ProductName $name, ProductPrice $price, ): self { $product = new self( $id, $name, $price, ); $this-&gt;record(new ProductCreated( $id-&gt;value(), $name-&gt;value(), $price-&gt;value(), )); return $product; } public function id(): ProductId { return $this-&gt;id; } public function name(): ProductName { return $this-&gt;name; } public function price(): ProductPrice { return $this-&gt;price; } } Voilà la Projection qui peut soit être appelée, soit être déjà présente dans un EventListener ou un MessageHandler. Pour le besoin d’un exemple court, j’ai mis le code directement dans l’EventListener. Je recommande de le sortir dans une classe dédiée. 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 namespace App\Infrastructure\Projection; final readonly class CreateProductProjection { public function __construct( private ProductAdapterInterface $productAdapter, ) { } public function __invoke(ProductCreated $event): void { $product = new Product( $event-&gt;productId, $event-&gt;name, $event-&gt;price, ); $this-&gt;productAdapter-&gt;add($product); } } Voilà l’Adapter qui sera en charge de stocker les données dans le modèle de lecture : 1 2 3 4 5 6 namespace App\Infrastructure\Adapter; interface ProductAdapterInterface { public function add(Product $product): void; } L’implémentation dépendra de la solution que vous choisirez. Voici à quoi ressemble le modèle de lecture du Product : 1 2 3 4 5 6 7 8 9 10 namespace App\Infrastructure\ReadModel; final readonly class Product { public function __construct( public string $id, public string $name, public float $price, ) {} } Le modèle de lecture est désormais prêt, il faut maintenant l’interroger. Interrogation du modèle de lecture Pour cela, j’ai repris le schéma du Use Case que j’ai un peu modifié : L’Adapter de lecture ne se trouve donc maintenant plus dans le Domaine, mais dans la couche Infrastructure. 1 2 3 4 5 6 7 8 9 10 11 namespace App\Infrastructure\Adapter; interface ProductAdapterInterface { public function add(Product $product): void; /** * @return Product[] */ public function getProductsWithName(string $name, int $itemPerPage, int $page): array; } L’Adapter est donc en charge de lire le modèle de lecture, on y retrouve la méthode qui était dans le Repository de l’exemple précédent. J’ai modifié le paramètre name, pour que ce ne soit plus qu’une simple String. Puisqu’on est en dehors du Domaine, il n’est plus nécessaire que ce soit un Value Object. La Query ne change pas : 1 2 3 4 5 6 7 8 9 10 11 namespace App\Infrastructure\Query; final readonly class ListProductsWithNameQuery { public function __construct( public string $name, public int $itemPerPage, public int $page, ) { } } Dorénavant, le QueryHandler n’appellera plus le Repository du Domaine mais l’Adapter qui lit dans le Read Model : 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 namespace App\Infrastructure\Query; final readonly class ListProductsWithNameQueryHandler { public function __construct( private ProductAdapterInterface $productAdapter ) {} /** * @return Product[] */ public function __invoke(ListProductsWithNameQuery $query): array { return $this-&gt;productAdapter-&gt;getProductsWithName( $query-&gt;name, $query-&gt;itemPerPage, $query-&gt;page ); } } Le Controller ne change pas non plus : 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 namespace App\Infrastructure\Controller; final class ProductController extends AbstractController { public function __construct( private readonly QueryBus $queryBus, ) {} public function __invoke(Request $request): Response { $products = $this-&gt;queryBus-&gt;ask( new ListProductsWithNameQuery( $request-&gt;query-&gt;get('name'), (int) $request-&gt;query-&gt;get('itemPerPage'), (int) $request-&gt;query-&gt;get('page'), ) ); $paginatedProduct = new PaginatedProduct( products: $products, total: count($products), page: (int) $request-&gt;query-&gt;get('page'), ); return $this-&gt;json($paginatedProduct); } } J’ai tenté de répondre à la question : la pagination est-elle un besoin métier ou un besoin technique ? De ce qu’on a vu, la pagination fait partie des use cases métier mais ne relève pas de la responsabilité du Domaine. Il est donc nécessaire de l’intégrer en dissociant le modèle de lecture du modèle du Domaine. Une telle approche permet de garder l’intégrité du Domaine en le maintenant à l’écart des problématiques qui ne relèvent pas de son périmètre. Pour les intéressés, vous pouvez retrouver tout le code de cet article sur GitHub. Vous y trouverez le code sans le Read Model ainsi que la dernière version. Je vous donne rendez-vous dans quinze jours pour un prochain article du Journal de Bord du DDD.]]></summary></entry><entry xml:lang="fr"><title type="html">Journal de bord de l’apprentissage du Domain-Driven Design : Jour 1</title><link href="https://huguesgobet.com/ddd-logbook/2024-12-02" rel="alternate" type="text/html" title="Journal de bord de l’apprentissage du Domain-Driven Design : Jour 1" /><published>2024-12-02T15:00:00+00:00</published><updated>2024-12-02T15:00:00+00:00</updated><id>https://huguesgobet.com/fr/ddd-logbook/journal-de-bord-jour-un</id><content type="html" xml:base="https://huguesgobet.com/ddd-logbook/2024-12-02"><![CDATA[<p>Bienvenue dans ce journal de bord où je partage mon expérience du <strong>Domain-Driven Design (DDD)</strong>, une approche stratégique pour concevoir des logiciels complexes. Il place le <strong>domaine métier</strong> au cœur de la modélisation pour la rendre plus cohérente et compréhensible. À travers une série d’articles, nous explorerons ensemble les concepts fondamentaux, les bonnes pratiques et les pièges à éviter, le tout à travers mon expérience personnelle. Que vous soyez développeur, architecte logiciel ou professionnel, vous trouverez ici une présentation progressive du <strong>DDD</strong> et de ses fondamentaux.</p>
+
+<h2 id="avant-de-plonger-dans-le-vif-du-sujet">Avant de plonger dans le vif du sujet</h2>
+
+<p>Les termes en gras font partie du lexique DDD ou sont liés à des notions d’architecture système, vous pouvez retrouver leur définition dans un chapitre annexe.</p>
+
+<p>Les références en italique mentionnent les auteurs de livre et leurs ouvrages.</p>
+
+<p>Les mots en gras et en italique font référence aux noms des fonctions et aux termes de code spécifiques à mon projet.</p>
+
+<p>Les mots soulignés en rouge sont issus de l’Ubiquitous Language.</p>
+
+<h2 id="pourquoi-écrire-un-journal-de-bord">Pourquoi écrire un journal de bord ?</h2>
+
+<p>L’idée de cette série d’articles est de documenter mon expérience du <strong>DDD</strong>, en partageant chaque étape de mon processus d’apprentissage et de création de projet. Grâce à vos retours et à vos discussions, je souhaite continuer à apprendre et à affiner ma compréhension de ce sujet fascinant.</p>
+
+<p>Je partagerai donc mes erreurs, les corrections que j’ai apportées et les raisonnements derrière mes choix, dans le but que d’autres puissent apprendre de mes découvertes (et évitent ainsi de refaire les mêmes erreurs que moi !). Les encadrés « Vision du Futur » servent à expliquer les erreurs avant que je n’aborde le sujet dans le journal de bord.</p>
+
+<h2 id="pourquoi-utiliser-le-ddd">Pourquoi utiliser le <strong>DDD</strong> ?</h2>
+
+<p>C’est en commençant à m’intéresser à cette pratique que j’ai découvert son intérêt dans la gestion de projets.</p>
+
+<h3 id="la-découverte">La découverte</h3>
+
+<p>Tout a commencé lorsque j’ai dû m’intéresser au <strong>DDD</strong> pour l’une de mes missions freelance. J’ai donc acheté le livre d’<em>Éric Evans</em> (le créateur du <em>Domain Driven Design</em>) mais j’ai remisé le livre dans ma bibliothèque sans le lire, ayant été finalement engagé pour la mission sans qu’on ne m’en demande plus.</p>
+
+<p>J’ai repris ce livre lors d’une période d’inter-contrat, intrigué par son contenu. En le lisant, j’ai trouvé le concept très compliqué, bien plus que ce que j’avais lu auparavant. Mais en m’y intéressant, j’ai découvert une façon fascinante de concevoir des logiciels. Plus j’avançais dans la lecture, plus j’avais envie d’essayer cette méthode. Cela donnait un sens nouveau à la création de logiciel. J’ai terminé le livre dans son intégralité en prenant des notes pour garder près de moi les aspects les plus importants.</p>
+
+<p>Après un mois, j’avais presque autant de questions que de réponses. J’ai donc enrichi mon apprentissage avec d’autres lectures, notamment <em>Advanced Web Application Architecture</em> de <em>Matthias Noback</em>. Ce dernier livre m’a permis d’avoir une approche plus concrète du <strong>DDD</strong> même si ce n’est pas l’objet principal du livre. Je me suis alors senti prêt à développer mon premier projet en <strong>DDD</strong>.</p>
+
+<p>Tout en avançant sur mon premier projet, j’ai lu <em>Implementing Domain Driven Design</em>, de <em>Vernon Vaughn</em>, qui a enrichi mon approche du <strong>DDD</strong>.</p>
+
+<p><img src="/assets/images/2024-12-02/fr.png" alt="Livres" /></p>
+
+<h2 id="ubiquitous-language">Ubiquitous Language</h2>
+
+<p>Terme clé du <strong>DDD</strong>, l’<strong>Ubiquitous Language</strong> représente les termes liés au métier de votre domaine. Il est le cœur de votre système et doit être développé grâce à une collaboration entre les développeurs et les experts métiers.</p>
+
+<p>Toutes les fonctionnalités découlent de l’<strong>Ubiquitous Language</strong> et le code doit en être le reflet.</p>
+
+<h2 id="le-premier-projet-développé-en-domain-driven-design">Le premier projet développé en Domain-Driven Design</h2>
+
+<p>Pour mettre en pratique le <strong>DDD</strong>, j’ai décidé de créer une API qui référence les <u>vins</u> que je bois, permettant de les enregistrer, de les visualiser (via une application mobile qui arrivera plus tard) et de créer des fiches de <u>dégustation</u>. Il ne restait plus qu’à trouver le nom, <strong><em>Des amis, du vin</em></strong>, m’est venu naturellement.</p>
+
+<h3 id="domain-vision-statement">Domain Vision Statement</h3>
+
+<p>Avant de commencer le projet, j’ai suivi la pratique recommandée par <em>Eric Evans</em> : écrire un <strong>Domain Vision Statement</strong>.</p>
+
+<h4 id="quest-ce-que-cest">Qu’est-ce que c’est ?</h4>
+
+<p>Un <strong>Domain Vision Statement</strong> peut être utilisé comme un guide qui maintient l’équipe de développement concentrée dans la même direction pour la distillation du modèle et du code.</p>
+
+<p>Pour le mettre en place, il suffit d’écrire une courte description du <strong>Core Domain</strong> et la valeur qu’il apporte. Ignorez les aspects qui distinguent ce <strong>Domain</strong> d’un autre et montrez comment le modèle sert et équilibre les intérêts divers. Il est important d’écrire ce document le plus tôt possible et de le réviser à chaque nouveau retour.</p>
+
+<h4 id="pour-mon-projet">Pour mon projet</h4>
+
+<p>Voici donc la version initiale, elle concerne uniquement les fonctionnalités principales :</p>
+
+<p>Une <u>bouteille</u> est constituée d’un <u>nom</u>, d’un <u>nom de domaine</u>, d’un <u>type</u> (<u>blanc</u>, <u>rouge</u>, <u>rosé</u>, <u>champagne</u>, <u>pétillant rouge</u>, <u>pétillant blanc</u>), d’une <u>année</u>, d’un <u>cépage</u>, d’un <u>pays</u>, d’un <u>prix</u>, d’une <u>note</u>, d’une <u>remarque</u>, d’une <u>photo</u> et de la <u>date d'ajout</u>.</p>
+
+<p>Les fonctionnalités à inclure sont la <u>création</u>, la <u>modification</u> et la <u>suppression</u> d’une <u>bouteille</u> avec toutes les informations, et la <u>recherche</u> par divers critères (<u>nom du vin</u>, <u>nom du domaine</u>, <u>type</u>, <u>date d'ajout</u>/<u>de dégustation</u>, <u>année du vin</u>, <u>note</u>).</p>
+
+<h3 id="vision-du-futur">Vision du Futur</h3>
+
+<p>Je n’avais à ce moment-là pas la notion du <strong>Core Domain</strong>, j’ai donc écrit uniquement les fonctionnalités principales. Mais je partage néanmoins les définitions du <strong>Core Domain</strong> et des différents <strong>Subdomain</strong>, avant de les détailler de façon plus précise dans un prochain article.</p>
+
+<h2 id="core-domain-et-subdomain">Core Domain et Subdomain</h2>
+
+<p>Le <strong>Core Domain</strong> est là où il faut mettre le plus de valeur. Il est nécessaire de trouver le domaine central et de fournir un moyen de le distinguer facilement de la masse du support du milieu et du code. Le <strong>Core Domain</strong> doit amener la plus grande valeur ainsi que des concepts. Il peut être composé de plusieurs <strong>Bounded Context</strong>.</p>
+
+<p>Un <strong>Subdomain</strong> représente une petite partie du domaine qui peut être découpée en modules pour séparer le domaine. Il y a plusieurs types de sous-domaines :</p>
+
+<ul>
+  <li><strong>Supporting Subdomains</strong> : un ou plusieurs domaines importants pour le métier, mais moins que le core. On crée un domaine de support parce qu’il a quelque chose de spécial.</li>
+  <li><strong>Generic Subdomains</strong> : s’il n’y a pas de spécificité métier alors on parle de domaine générique.</li>
+</ul>
+
+<h3 id="vision-du-futur-1">Vision du Futur</h3>
+
+<p>Dans mon cas, le <strong>Core Domain</strong> est de faire un inventaire de <u>bouteilles de vins</u>.</p>
+
+<p>Tout cela représente déjà beaucoup d’informations à retenir. Si vous deviez ne retenir qu’une seule chose, souvenez-vous de l’<strong>Ubiquitous Language</strong> : c’est la notion centrale du <strong>DDD</strong>. Il est le lien entre le métier et l’équipe technique. Il est primordial qu’il transparaisse dans le code.</p>
+
+<p>N’hésitez pas à commenter cet article. Connaissiez-vous le <strong>DDD</strong> ? Quels livres et ressources vous ont aidé à vous lancer ?</p>
+
+<p>À très bientôt pour un nouvel épisode de ce journal de bord.</p>]]></content><author><name>Hugues Gobet</name><email>hugues.gobet@gmail.com</email></author><category term="ddd-logbook" /><summary type="html"><![CDATA[Bienvenue dans ce journal de bord où je partage mon expérience du Domain-Driven Design (DDD), une approche stratégique pour concevoir des logiciels complexes. Il place le domaine métier au cœur de la modélisation pour la rendre plus cohérente et compréhensible. À travers une série d’articles, nous explorerons ensemble les concepts fondamentaux, les bonnes pratiques et les pièges à éviter, le tout à travers mon expérience personnelle. Que vous soyez développeur, architecte logiciel ou professionnel, vous trouverez ici une présentation progressive du DDD et de ses fondamentaux. Avant de plonger dans le vif du sujet Les termes en gras font partie du lexique DDD ou sont liés à des notions d’architecture système, vous pouvez retrouver leur définition dans un chapitre annexe. Les références en italique mentionnent les auteurs de livre et leurs ouvrages. Les mots en gras et en italique font référence aux noms des fonctions et aux termes de code spécifiques à mon projet. Les mots soulignés en rouge sont issus de l’Ubiquitous Language. Pourquoi écrire un journal de bord ? L’idée de cette série d’articles est de documenter mon expérience du DDD, en partageant chaque étape de mon processus d’apprentissage et de création de projet. Grâce à vos retours et à vos discussions, je souhaite continuer à apprendre et à affiner ma compréhension de ce sujet fascinant. Je partagerai donc mes erreurs, les corrections que j’ai apportées et les raisonnements derrière mes choix, dans le but que d’autres puissent apprendre de mes découvertes (et évitent ainsi de refaire les mêmes erreurs que moi !). Les encadrés « Vision du Futur » servent à expliquer les erreurs avant que je n’aborde le sujet dans le journal de bord. Pourquoi utiliser le DDD ? C’est en commençant à m’intéresser à cette pratique que j’ai découvert son intérêt dans la gestion de projets. La découverte Tout a commencé lorsque j’ai dû m’intéresser au DDD pour l’une de mes missions freelance. J’ai donc acheté le livre d’Éric Evans (le créateur du Domain Driven Design) mais j’ai remisé le livre dans ma bibliothèque sans le lire, ayant été finalement engagé pour la mission sans qu’on ne m’en demande plus. J’ai repris ce livre lors d’une période d’inter-contrat, intrigué par son contenu. En le lisant, j’ai trouvé le concept très compliqué, bien plus que ce que j’avais lu auparavant. Mais en m’y intéressant, j’ai découvert une façon fascinante de concevoir des logiciels. Plus j’avançais dans la lecture, plus j’avais envie d’essayer cette méthode. Cela donnait un sens nouveau à la création de logiciel. J’ai terminé le livre dans son intégralité en prenant des notes pour garder près de moi les aspects les plus importants. Après un mois, j’avais presque autant de questions que de réponses. J’ai donc enrichi mon apprentissage avec d’autres lectures, notamment Advanced Web Application Architecture de Matthias Noback. Ce dernier livre m’a permis d’avoir une approche plus concrète du DDD même si ce n’est pas l’objet principal du livre. Je me suis alors senti prêt à développer mon premier projet en DDD. Tout en avançant sur mon premier projet, j’ai lu Implementing Domain Driven Design, de Vernon Vaughn, qui a enrichi mon approche du DDD. Ubiquitous Language Terme clé du DDD, l’Ubiquitous Language représente les termes liés au métier de votre domaine. Il est le cœur de votre système et doit être développé grâce à une collaboration entre les développeurs et les experts métiers. Toutes les fonctionnalités découlent de l’Ubiquitous Language et le code doit en être le reflet. Le premier projet développé en Domain-Driven Design Pour mettre en pratique le DDD, j’ai décidé de créer une API qui référence les vins que je bois, permettant de les enregistrer, de les visualiser (via une application mobile qui arrivera plus tard) et de créer des fiches de dégustation. Il ne restait plus qu’à trouver le nom, Des amis, du vin, m’est venu naturellement. Domain Vision Statement Avant de commencer le projet, j’ai suivi la pratique recommandée par Eric Evans : écrire un Domain Vision Statement. Qu’est-ce que c’est ? Un Domain Vision Statement peut être utilisé comme un guide qui maintient l’équipe de développement concentrée dans la même direction pour la distillation du modèle et du code. Pour le mettre en place, il suffit d’écrire une courte description du Core Domain et la valeur qu’il apporte. Ignorez les aspects qui distinguent ce Domain d’un autre et montrez comment le modèle sert et équilibre les intérêts divers. Il est important d’écrire ce document le plus tôt possible et de le réviser à chaque nouveau retour. Pour mon projet Voici donc la version initiale, elle concerne uniquement les fonctionnalités principales : Une bouteille est constituée d’un nom, d’un nom de domaine, d’un type (blanc, rouge, rosé, champagne, pétillant rouge, pétillant blanc), d’une année, d’un cépage, d’un pays, d’un prix, d’une note, d’une remarque, d’une photo et de la date d'ajout. Les fonctionnalités à inclure sont la création, la modification et la suppression d’une bouteille avec toutes les informations, et la recherche par divers critères (nom du vin, nom du domaine, type, date d'ajout/de dégustation, année du vin, note). Vision du Futur Je n’avais à ce moment-là pas la notion du Core Domain, j’ai donc écrit uniquement les fonctionnalités principales. Mais je partage néanmoins les définitions du Core Domain et des différents Subdomain, avant de les détailler de façon plus précise dans un prochain article. Core Domain et Subdomain Le Core Domain est là où il faut mettre le plus de valeur. Il est nécessaire de trouver le domaine central et de fournir un moyen de le distinguer facilement de la masse du support du milieu et du code. Le Core Domain doit amener la plus grande valeur ainsi que des concepts. Il peut être composé de plusieurs Bounded Context. Un Subdomain représente une petite partie du domaine qui peut être découpée en modules pour séparer le domaine. Il y a plusieurs types de sous-domaines : Supporting Subdomains : un ou plusieurs domaines importants pour le métier, mais moins que le core. On crée un domaine de support parce qu’il a quelque chose de spécial. Generic Subdomains : s’il n’y a pas de spécificité métier alors on parle de domaine générique. Vision du Futur Dans mon cas, le Core Domain est de faire un inventaire de bouteilles de vins. Tout cela représente déjà beaucoup d’informations à retenir. Si vous deviez ne retenir qu’une seule chose, souvenez-vous de l’Ubiquitous Language : c’est la notion centrale du DDD. Il est le lien entre le métier et l’équipe technique. Il est primordial qu’il transparaisse dans le code. N’hésitez pas à commenter cet article. Connaissiez-vous le DDD ? Quels livres et ressources vous ont aidé à vous lancer ? À très bientôt pour un nouvel épisode de ce journal de bord.]]></summary></entry></feed>
