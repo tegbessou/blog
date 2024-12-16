@@ -1,7 +1,7 @@
 ---
 layout: article
 title: "Pagination: Business or Technical Need?"
-date:   2024-12-16 15:00:00
+date:   2024-12-16 14:00:00
 categories: other
 lang: en
 resume: "This article explores pagination within a software architecture context, emphasizing DDD and CQRS. It illustrates how to separate technical and business concerns to maintain the domain’s integrity."

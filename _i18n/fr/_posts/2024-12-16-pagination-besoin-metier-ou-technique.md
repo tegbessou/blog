@@ -1,7 +1,7 @@
 ---
 layout: article
 title: "La pagination : besoin métier ou besoin technique ?"
-date:   2024-12-16 15:00:00
+date:   2024-12-16 14:00:00
 categories: other
 lang: fr
 resume: "Cet article examine la pagination dans un contexte d'architecture logicielle, en mettant l'accent sur l’approche DDD et CQRS. Il montre comment séparer les préoccupations techniques et métiers pour préserver l'intégrité du domaine."
