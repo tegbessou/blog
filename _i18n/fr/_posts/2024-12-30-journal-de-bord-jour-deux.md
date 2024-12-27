@@ -1,11 +1,11 @@
 ---
 layout: article
 title: "Journal de bord de l’apprentissage du Domain-Driven Design : Jour 2"
-date:   2024-12-26 14:00:00
+date:   2024-12-30 10:00:00
 categories: ddd-logbook
 lang: fr
 resume: "Cet article examine la pagination dans un contexte d'architecture logicielle, en mettant l'accent sur l’approche DDD et CQRS. Il montre comment séparer les préoccupations techniques et métiers pour préserver l'intégrité du domaine."
-permalink: /ddd-logbook/2024-12-27
+permalink: /ddd-logbook/2024-12-30
 ---
 
 Dans mon précédent article du journal de bord, j’ai introduit les concepts de base du **Domain-Driven Design (DDD)**, et en particulier l’importance de l’_Ubiquitous Langage_. Aujourd’hui, j’expose la mise en place et la structure de mon projet.
