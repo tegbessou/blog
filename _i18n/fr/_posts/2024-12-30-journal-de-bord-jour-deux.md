@@ -4,7 +4,7 @@ title: "Journal de bord de l’apprentissage du Domain-Driven Design : Jour 2"
 date:   2024-12-30 10:00:00
 categories: ddd-logbook
 lang: fr
-resume: "Cet article examine la pagination dans un contexte d'architecture logicielle, en mettant l'accent sur l’approche DDD et CQRS. Il montre comment séparer les préoccupations techniques et métiers pour préserver l'intégrité du domaine."
+resume: "Cet article présente la mise en place d’un projet Symfony en s’appuyant sur le DDD, l’architecture hexagonale et CQRS. Il décrit notamment la structure des dossiers, les outils utilisés et la notion de Bounded Context."
 permalink: /ddd-logbook/2024-12-30
 ---
 
