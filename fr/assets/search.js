@@ -1,0 +1,1 @@
+window.TEXT_SEARCH_DATA={'posts':[{'title':"Journal de bord de l’apprentissage du Domain-Driven Design : Jour 1",'url':"/fr/ddd-logbook/2024-12-02"},{'title':"La pagination : besoin métier ou besoin technique ?",'url':"/fr/other/2024-12-16"},{'title':"Journal de bord de l’apprentissage du Domain-Driven Design : Jour 2",'url':"/fr/ddd-logbook/2024-12-30"}]};
