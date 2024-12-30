@@ -41,7 +41,7 @@ Les _Adapter_ d’entrées convertissent ces demandes en opérations pour l’ap
 
 L’_Adapter_ de sortie, quant à lui, envoie des données vers des systèmes externes, comme un message AMQP pour notifier un changement d’état. Le Port utilisé est différent de celui utilisé pour la persistance.
 
-![Architecture héxagonale](/assets/images/2024-12-27/hexagonal-architecture.png)
+![Architecture héxagonale](/assets/images/2024-12-30/hexagonal-architecture.png)
 
 ### CQRS (Command Query Responsibility Segregation)
 
@@ -56,7 +56,7 @@ La séparation stricte clarifie la structure et rend le code plus lisible et mai
 
 Il y a une autre partie du **CQRS** que je n’évoque pas ici, car je ne l’ai découverte que plus tard : la séparation de la couche de lecture et d’écriture. J’aborderai ce point plus en détail dans un article ultérieur du Journal.
 
-![CQRS](/assets/images/2024-12-27/cqrs.png)
+![CQRS](/assets/images/2024-12-30/cqrs.png)
 
 ### Bounded Context
 
@@ -73,7 +73,7 @@ En m’appuyant sur mon **Domain Vision Statement** [lien vers l’article 1], j
 - **Bottle** : gère les bouteilles et les cépages (variété de plants de vigne cultivée)
 - **User** : gère les utilisateurs et la sécurité
 
-![Des amis, du vin context map](/assets/images/2024-12-27/bottles.png)
+![Des amis, du vin context map](/assets/images/2024-12-30/bottles.png)
 
 ## Structure du projet
 
@@ -87,7 +87,7 @@ Dans chaque **Bounded Context**, on va retrouver :
 
 Voici ce que ça donne pour mon projet (j’utilise ***PHPStorm*** pour développer) :
 
-![Des amis, du vin structure du projet](/assets/images/2024-12-27/code-structure.png){:width="25%"}
+![Des amis, du vin structure du projet](/assets/images/2024-12-30/code-structure.png){:width="25%"}
 
 La couche **Application** est facultative. On peut avoir des implémentations de l’**Architecture Hexagonale** avec seulement le **Domaine** et l’**Infrastructure**.
 
