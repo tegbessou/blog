@@ -1,0 +1,2852 @@
+<!DOCTYPE html><html lang="fr">
+  <head><!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-6H5WPV9WFH"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+
+		gtag('config', 'G-6H5WPV9WFH');
+		
+	</script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Journal de bord de l’apprentissage du Domain-Driven Design : Jour 5 - Blog - Hugues Gobet</title>
+
+<meta name="description" content="Dans cet article, je vais aborder la notion de « Country » dans le cadre d’un Supporting Domain en prenant comme exemple un Domain Country. Je vais également...">
+<link rel="canonical" href="https://huguesgobet.com/fr/ddd-logbook/2025-02-17"><link rel="alternate" type="application/rss+xml" title="Blog - Hugues Gobet" href="/fr/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/fr/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/fr/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/fr/assets/favicon-16x16.png"><link rel="manifest" href="/fr/assets/site.webmanifest"><link rel="mask-icon" href="/fr/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/fr/assets/favicon.ico">
+
+<meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/fr/assets/browserconfig.xml">
+
+<meta name="theme-color" content="#ffffff">
+<!-- end favicons snippet --><link rel="stylesheet" href="/fr/assets/css/main.css"><link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.1/css/all.css" ><!-- start custom head snippets -->
+
+<!-- end custom head snippets -->
+<script>(function() {
+  window.isArray = function(val) {
+    return Object.prototype.toString.call(val) === '[object Array]';
+  };
+  window.isString = function(val) {
+    return typeof val === 'string';
+  };
+
+  window.hasEvent = function(event) {
+    return 'on'.concat(event) in window.document;
+  };
+
+  window.isOverallScroller = function(node) {
+    return node === document.documentElement || node === document.body || node === window;
+  };
+
+  window.isFormElement = function(node) {
+    var tagName = node.tagName;
+    return tagName === 'INPUT' || tagName === 'SELECT' || tagName === 'TEXTAREA';
+  };
+
+  window.pageLoad = (function () {
+    var loaded = false, cbs = [];
+    window.addEventListener('load', function () {
+      var i;
+      loaded = true;
+      if (cbs.length > 0) {
+        for (i = 0; i < cbs.length; i++) {
+          cbs[i]();
+        }
+      }
+    });
+    return {
+      then: function(cb) {
+        cb && (loaded ? cb() : (cbs.push(cb)));
+      }
+    };
+  })();
+})();
+(function() {
+  window.throttle = function(func, wait) {
+    var args, result, thisArg, timeoutId, lastCalled = 0;
+
+    function trailingCall() {
+      lastCalled = new Date;
+      timeoutId = null;
+      result = func.apply(thisArg, args);
+    }
+    return function() {
+      var now = new Date,
+        remaining = wait - (now - lastCalled);
+
+      args = arguments;
+      thisArg = this;
+
+      if (remaining <= 0) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+        lastCalled = now;
+        result = func.apply(thisArg, args);
+      } else if (!timeoutId) {
+        timeoutId = setTimeout(trailingCall, remaining);
+      }
+      return result;
+    };
+  };
+})();
+(function() {
+  var Set = (function() {
+    var add = function(item) {
+      var i, data = this._data;
+      for (i = 0; i < data.length; i++) {
+        if (data[i] === item) {
+          return;
+        }
+      }
+      this.size ++;
+      data.push(item);
+      return data;
+    };
+
+    var Set = function(data) {
+      this.size = 0;
+      this._data = [];
+      var i;
+      if (data.length > 0) {
+        for (i = 0; i < data.length; i++) {
+          add.call(this, data[i]);
+        }
+      }
+    };
+    Set.prototype.add = add;
+    Set.prototype.get = function(index) { return this._data[index]; };
+    Set.prototype.has = function(item) {
+      var i, data = this._data;
+      for (i = 0; i < data.length; i++) {
+        if (this.get(i) === item) {
+          return true;
+        }
+      }
+      return false;
+    };
+    Set.prototype.is = function(map) {
+      if (map._data.length !== this._data.length) { return false; }
+      var i, j, flag, tData = this._data, mData = map._data;
+      for (i = 0; i < tData.length; i++) {
+        for (flag = false, j = 0; j < mData.length; j++) {
+          if (tData[i] === mData[j]) {
+            flag = true;
+            break;
+          }
+        }
+        if (!flag) { return false; }
+      }
+      return true;
+    };
+    Set.prototype.values = function() {
+      return this._data;
+    };
+    return Set;
+  })();
+
+  window.Lazyload = (function(doc) {
+    var queue = {js: [], css: []}, sources = {js: {}, css: {}}, context = this;
+    var createNode = function(name, attrs) {
+      var node = doc.createElement(name), attr;
+      for (attr in attrs) {
+        if (attrs.hasOwnProperty(attr)) {
+          node.setAttribute(attr, attrs[attr]);
+        }
+      }
+      return node;
+    };
+    var end = function(type, url) {
+      var s, q, qi, cbs, i, j, cur, val, flag;
+      if (type === 'js' || type ==='css') {
+        s = sources[type], q = queue[type];
+        s[url] = true;
+        for (i = 0; i < q.length; i++) {
+          cur = q[i];
+          if (cur.urls.has(url)) {
+            qi = cur, val = qi.urls.values();
+            qi && (cbs = qi.callbacks);
+            for (flag = true, j = 0; j < val.length; j++) {
+              cur = val[j];
+              if (!s[cur]) {
+                flag = false;
+              }
+            }
+            if (flag && cbs && cbs.length > 0) {
+              for (j = 0; j < cbs.length; j++) {
+                cbs[j].call(context);
+              }
+              qi.load = true;
+            }
+          }
+        }
+      }
+    };
+    var load = function(type, urls, callback) {
+      var s, q, qi, node, i, cur,
+        _urls = typeof urls === 'string' ? new Set([urls]) : new Set(urls), val, url;
+      if (type === 'js' || type ==='css') {
+        s = sources[type], q = queue[type];
+        for (i = 0; i < q.length; i++) {
+          cur = q[i];
+          if (_urls.is(cur.urls)) {
+            qi = cur;
+            break;
+          }
+        }
+        val = _urls.values();
+        if (qi) {
+          callback && (qi.load || qi.callbacks.push(callback));
+          callback && (qi.load && callback());
+        } else {
+          q.push({
+            urls: _urls,
+            callbacks: callback ? [callback] : [],
+            load: false
+          });
+          for (i = 0; i < val.length; i++) {
+            node = null, url = val[i];
+            if (s[url] === undefined) {
+              (type === 'js' ) && (node = createNode('script', { src: url }));
+              (type === 'css') && (node = createNode('link', { rel: 'stylesheet', href: url }));
+              if (node) {
+                node.onload = (function(type, url) {
+                  return function() {
+                    end(type, url);
+                  };
+                })(type, url);
+                (doc.head || doc.body).appendChild(node);
+                s[url] = false;
+              }
+            }
+          }
+        }
+      }
+    };
+    return {
+      js: function(url, callback) {
+        load('js', url, callback);
+      },
+      css: function(url, callback) {
+        load('css', url, callback);
+      }
+    };
+  })(this.document);
+})();
+</script><script>
+  (function() {
+    var TEXT_VARIABLES = {
+      version: '2.2.6',
+      sources: {
+        font_awesome: 'https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.1/css/all.css',
+        jquery: 'https://cdn.bootcss.com/jquery/3.1.1/jquery.min.js',
+        leancloud_js_sdk: '//cdn.jsdelivr.net/npm/leancloud-storage@3.13.2/dist/av-min.js',
+        chart: 'https://cdn.bootcss.com/Chart.js/2.7.2/Chart.bundle.min.js',
+        gitalk: {
+          js: 'https://cdn.bootcss.com/gitalk/1.2.2/gitalk.min.js',
+          css: 'https://cdn.bootcss.com/gitalk/1.2.2/gitalk.min.css'
+        },
+        valine: 'https://unpkg.com/valine/dist/Valine.min.js',
+        mathjax: 'https://cdn.bootcss.com/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML',
+        mermaid: 'https://cdn.bootcss.com/mermaid/8.0.0-rc.8/mermaid.min.js'
+      },
+      site: {
+        toc: {
+          selectors: 'h1,h2,h3'
+        }
+      },
+      paths: {
+        search_js: '/fr/assets/search.js'
+      }
+    };
+    window.TEXT_VARIABLES = TEXT_VARIABLES;
+  })();
+</script>
+</head>
+  <body>
+    <div class="root" data-is-touch="false">
+      <div class="layout--page js-page-root"><div class="page__main js-page-main page__viewport has-aside cell cell--auto">
+
+      <div class="page__main-inner"><div class="page__header d-print-none"><header class="header"><div class="main">
+      <div class="header__title">
+        <div class="header__brand"><?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+ "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+ width="1280.000000pt" height="1026.000000pt" viewBox="0 0 1280.000000 1026.000000"
+ preserveAspectRatio="xMidYMid meet">
+<metadata>
+Created by potrace 1.15, written by Peter Selinger 2001-2017
+</metadata>
+<g transform="translate(0.000000,1026.000000) scale(0.100000,-0.100000)"
+fill="#000000" stroke="none">
+<path d="M5230 10251 c-54 -17 -109 -53 -190 -126 -99 -88 -148 -115 -213
+-115 -67 0 -118 24 -161 76 -45 53 -129 104 -174 104 -46 0 -113 -37 -217
+-119 -50 -40 -119 -86 -155 -104 -58 -29 -74 -32 -150 -32 -66 0 -96 5 -134
+23 -71 32 -174 31 -244 -4 -70 -35 -104 -90 -154 -250 l-41 -132 -38 -12 c-27
+-9 -74 -11 -156 -7 -70 3 -135 2 -160 -5 -97 -24 -173 -134 -174 -255 0 -96
+-13 -161 -35 -183 -13 -13 -56 -25 -139 -40 -173 -30 -203 -42 -280 -112 -111
+-102 -124 -145 -101 -335 9 -71 13 -144 10 -161 -16 -77 -418 -346 -518 -345
+-17 0 -64 12 -105 27 -179 67 -330 15 -440 -149 -44 -66 -111 -214 -111 -247
+0 -7 -36 -28 -79 -46 -43 -18 -97 -48 -118 -67 -36 -30 -41 -40 -46 -90 -6
+-64 -46 -158 -85 -199 -34 -36 -97 -65 -141 -66 l-34 0 7 93 c15 218 19 513 7
+567 -27 128 -71 175 -161 174 -81 -1 -160 -42 -209 -107 -143 -196 -243 -451
+-277 -712 -34 -251 4 -546 101 -805 21 -56 25 -85 28 -205 4 -198 22 -235 164
+-341 75 -56 129 -119 140 -163 18 -78 93 -173 158 -202 22 -10 75 -22 118 -28
+98 -14 130 -30 162 -84 20 -35 25 -57 25 -108 0 -117 29 -399 55 -523 57 -285
+169 -527 365 -792 l68 -91 11 -136 c25 -294 110 -503 262 -641 131 -118 276
+-168 489 -170 137 0 216 10 350 46 41 11 76 16 77 12 30 -88 150 -153 284
+-154 l46 0 5 -98 c4 -66 14 -121 32 -174 24 -72 25 -79 11 -130 -31 -120 -109
+-317 -186 -470 -17 -35 -93 -146 -169 -248 -170 -228 -234 -329 -370 -585
+-172 -326 -193 -382 -194 -515 0 -58 4 -104 12 -117 16 -28 100 -59 215 -79
+74 -13 136 -15 312 -11 271 7 478 37 663 98 73 24 69 16 75 184 3 66 10 132
+16 147 5 15 57 90 114 165 249 331 395 568 486 794 l23 55 82 0 c58 0 99 7
+146 23 48 17 78 22 113 17 62 -7 152 -56 223 -120 68 -62 79 -30 -96 -291
+-162 -243 -216 -340 -340 -608 -131 -285 -152 -346 -158 -468 -6 -131 5 -161
+66 -187 74 -32 153 -42 323 -42 162 0 304 15 489 51 113 23 315 81 360 104
+l28 15 4 153 3 153 114 174 c210 320 307 493 392 695 l38 90 103 6 c189 10
+241 56 322 282 22 59 65 103 117 119 35 10 53 8 132 -12 58 -14 133 -25 202
+-27 100 -4 114 -2 155 19 56 29 84 76 105 178 24 112 43 156 80 189 48 42 100
+47 200 21 208 -54 508 -75 965 -67 179 3 365 11 413 17 49 6 91 10 93 7 9 -9
+-37 -193 -81 -325 -24 -73 -73 -194 -108 -270 -55 -119 -83 -164 -202 -323
+-181 -240 -223 -307 -377 -594 -155 -292 -188 -376 -195 -500 -6 -110 3 -138
+56 -165 195 -99 743 -81 1127 37 95 29 94 26 94 177 1 145 5 156 148 348 361
+486 494 753 617 1237 23 93 25 116 25 345 0 135 4 247 8 250 15 9 120 -41 185
+-87 171 -122 288 -340 343 -639 21 -112 29 -408 15 -533 -10 -93 -92 -401
+-137 -517 -23 -56 -75 -142 -152 -248 -110 -152 -171 -292 -186 -430 -5 -42
+-3 -46 29 -68 53 -34 174 -71 292 -88 132 -20 463 -22 643 -5 272 27 365 65
+413 170 24 55 26 174 7 398 -16 181 -11 236 55 628 63 371 77 491 78 655 0
+225 -11 275 -108 470 -173 346 -209 457 -208 645 0 216 38 368 184 738 259
+657 333 954 355 1432 6 124 9 145 23 143 20 -4 43 -69 91 -253 92 -359 120
+-668 120 -1339 l0 -418 -85 -133 c-250 -392 -320 -660 -236 -900 13 -37 32
+-65 62 -92 101 -88 99 -86 99 -155 0 -49 -10 -94 -45 -196 -75 -220 -80 -329
+-21 -457 20 -44 36 -60 97 -102 126 -84 160 -155 179 -373 19 -221 45 -287
+152 -396 55 -56 74 -84 92 -135 13 -35 29 -65 35 -67 6 -2 43 28 81 67 89 90
+151 215 216 436 75 256 98 375 120 637 5 59 13 80 81 200 157 275 189 367 180
+506 -7 98 -34 198 -88 327 -38 93 -39 97 -39 222 -1 319 -31 371 -325 568
+-164 111 -164 110 -210 281 -58 212 -66 309 -75 944 -9 612 -10 628 -65 985
+-69 440 -188 714 -410 944 -138 143 -311 273 -530 399 -237 136 -561 475 -811
+847 -216 321 -474 774 -474 833 0 17 16 86 36 154 20 68 44 153 52 190 15 66
+15 66 -11 111 -36 62 -73 77 -186 77 -170 0 -246 35 -308 140 -69 118 -80 133
+-126 167 -66 48 -131 71 -254 88 -119 17 -157 31 -196 70 -41 41 -63 82 -86
+160 -26 84 -49 119 -107 163 -52 40 -118 62 -188 62 -28 0 -125 -18 -216 -40
+-172 -42 -220 -47 -266 -30 -14 6 -68 50 -119 98 -125 118 -182 146 -295 146
+-72 0 -101 -6 -193 -38 -103 -35 -111 -37 -163 -26 -30 7 -110 39 -177 73
+-117 60 -125 62 -197 62 -92 0 -151 -27 -255 -116 -69 -60 -70 -60 -121 -55
+-78 9 -108 23 -202 97 -132 105 -202 119 -367 73 -185 -53 -236 -45 -377 58
+-79 58 -156 99 -181 97 -7 0 -23 -4 -37 -8z"/>
+</g>
+</svg>
+<a title="Your Site Description
+" href="/fr/">Blog - Hugues Gobet</a></div></div><nav class="navigation">
+        <ul><li class="navigation__item"><a href="/fr/ddd-journey">Journal DDD</a></li><li class="navigation__item"><a href="/fr/other">Autres articles</a></li><li class="navigation__item"><a href="/fr/about">À propos</a></li></ul>
+        <form id="language-switcher" action="" method="get">
+          <select name="lang" onchange="location = this.value;">
+            <option value="/fr/ddd-logbook/2025-02-17" selected>Français</option>
+            <option value="/ddd-logbook/2025-02-17" >English</option>
+          </select>
+        </form>
+        
+      </nav></div>
+  </header>
+</div><div class="page__content"><div class ="main"><div class="grid grid--reverse">
+
+              <div class="col-aside d-print-none js-col-aside"><aside class="page__aside js-page-aside"><div class="toc-aside js-toc-root">
+    <div class="sidebar-profile">
+        <img src="/assets/images/me.png" alt="Hugues Gobet" class="sidebar-avatar">
+        <h2 class="sidebar-name">Hugues Gobet</h2>
+
+        <p class="sidebar-bio">
+            
+                Développeur web, lead développeur et passionné d'architecture logicielle.
+            
+    </div>
+    <div class="sidebar-social">
+        <ul class="social-icons">
+            
+            <li>
+                <a href="https://medium.com/@hugues.gobet" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-medium"></i>
+                </a>
+            </li>
+            
+            
+            <li>
+                <a href="https://www.linkedin.com/in/hugues-gobet-854756bb/" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-linkedin"></i>
+                </a>
+            </li>
+            
+            
+            <li>
+                <a href="https://github.com/tegbessou" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-github"></i>
+                </a>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+</aside></div>
+
+              <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
+
+<!-- end custom main top snippet -->
+<article itemscope itemtype="http://schema.org/Article"><div class="article__header"><header><h1>Journal de bord de l’apprentissage du Domain-Driven Design : Jour 5</h1></header></div><meta itemprop="headline" content="Journal de bord de l’apprentissage du Domain-Driven Design : Jour 5"><div class="article__info clearfix"><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>17 Feb, 2025</span>
+            </li></ul></div><meta itemprop="author" content="Hugues Gobet"/><meta itemprop="datePublished" content="2025-02-17T08:00:00+00:00"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
+
+<!-- end custom article top snippet -->
+<div class="article__content" itemprop="articleBody"><p>Dans cet article, je vais aborder la notion de « Country » dans le cadre d’un <strong>Supporting Domain</strong> en prenant comme exemple un <strong>Domain Country</strong>. Je vais également détailler l’exposition d’une API permettant de récupérer les informations d’un pays et de vérifier son existence. Je commencerai par rappeler la définition d’un <strong>Supporting Subdomain</strong> ; ensuite je vous expliquerai comment le mettre en place pas à pas.</p>
+
+<h2 id="supporting-subdomain-quest-ce-que-cest">Supporting Subdomain : qu’est-ce que c’est ?</h2>
+
+<p>Comme son nom l’indique, un <strong>Supporting Subdomain</strong> est avant tout un Subdomain : il représente une partie du <strong>Domain</strong> qui peut être séparé en <strong>module</strong>. Dans un projet d’entreprise, une équipe distincte pourrait en être responsable. Un <strong>Subdomain</strong> peut parfaitement disposer de son propre <strong>Ubiquitous Language</strong> lorsqu’il appartient à un <strong>Bounded Context</strong> différent du <strong>Core Domain</strong>.</p>
+
+<p>Bien qu’important pour le métier, le <strong>Supporting Subdomain</strong> l’est pourtant moins que le <strong>Core Domain</strong>. Il n’est pertinent de créer un <strong>Supporting Subdomain</strong> que s’il apporte une valeur spécifique ou répond à un besoin particulier.</p>
+
+<p>Dans le cas de notre API de gestion de bouteilles de vins, j’ai créé un <strong>Domain Country</strong> pour séparer cette notion du <strong>Core Domain</strong> qui gère le <strong>Bottle Inventory</strong>. Cette séparation permet d’organiser le code dans deux <strong>Bounded Context</strong> distincts. De plus, ce <strong>Domain</strong> est essentiel pour pouvoir proposer une liste de pays lors de la création d’une bouteille, tout en s’assurant que le pays existe réellement. Toutefois, comme il reste moins crucial que le <strong>Core Domain</strong>, il correspond parfaitement à la définition d’un <strong>Supporting Subdomain</strong>.</p>
+
+<h2 id="comment-mettre-en-place-le-domain">Comment mettre en place le Domain ?</h2>
+
+<p>Dans cet article, je vais illustrer la mise en place du <strong>Domain</strong> à travers deux use cases. J’ai choisi de ne pas séparer ces cas en plusieurs parties, car ils sont assez répétitifs et ne représentent pas un véritable défi en terme de <strong>Domain-Driven Design (DDD)</strong>. Voici les deux scénarios que je vais aborder :</p>
+
+<ol>
+  <li>La création d’un <strong>Country</strong></li>
+  <li>La récupération de la liste de tous les <strong>Country</strong></li>
+</ol>
+
+<p>Je vous propose d’aborder ce sujet selon une approche différente de celle abordée pour le use case d’authentification. Je commencerai donc par la définition de l’<strong>Entity</strong>, accompagnée de tests unitaires afin d’intégrer une démarche orientée <strong>Test-Driven Development (TDD)</strong>.</p>
+
+<h2 id="présentation-rapide-du-tdd">Présentation rapide du TDD</h2>
+
+<p>Le <strong>Test-Driven Development (TDD)</strong> est une méthodologie de développement très intéressante qui mériterait un article complet à elle-seule. Si vous cherchez des informations pour approfondir le sujet, je vous recommande vivement le livre <em>Test-Driven Development : By Example</em> de Kent Beck.</p>
+
+<p>L’idée fondamentale derrière cette méthodologie est d’écrire les tests avant d’écrire la fonctionnalité correspondante. Cependant, l’essence même de cette approche réside dans une démarche progressive et rigoureuse, étape par étape (faire du pas-à-pas).</p>
+
+<p>Dans le but d’illustrer cette méthode, je vous propose d’examiner les tests liés à la création d’une <strong>Entity Country</strong>.</p>
+
+<h3 id="première-étape-test-de-la-création-dune-entity-country">Première étape : test de la création d’une Entity Country</h3>
+
+<p>Nous commencerons par un test simple permettant de valider la création correcte d’une <strong>Entity Country</strong>.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+</pre></td><td class="code"><pre><span class="k">public</span> <span class="k">function</span> <span class="n">testCreateSuccess</span><span class="p">():</span> <span class="kt">void</span>
+<span class="p">{</span>
+    <span class="nv">$country</span> <span class="o">=</span> <span class="nc">Country</span><span class="o">::</span><span class="nf">create</span><span class="p">(</span>
+        <span class="nc">CountryId</span><span class="o">::</span><span class="nf">fromString</span><span class="p">(</span><span class="s1">'af785dbb-4ac1-4786-a5aa-1fed08f6ec26'</span><span class="p">),</span>
+        <span class="nc">CountryName</span><span class="o">::</span><span class="nf">fromString</span><span class="p">(</span><span class="s1">'France'</span><span class="p">),</span>
+    <span class="p">);</span>
+
+    <span class="nv">$this</span><span class="o">-&gt;</span><span class="nf">assertInstanceOf</span><span class="p">(</span>
+        <span class="nc">Country</span><span class="o">::</span><span class="n">class</span><span class="p">,</span>
+        <span class="nv">$country</span><span class="p">,</span>
+    <span class="p">);</span>
+    <span class="nv">$this</span><span class="o">-&gt;</span><span class="nf">assertEquals</span><span class="p">(</span>
+        <span class="s1">'af785dbb-4ac1-4786-a5aa-1fed08f6ec26'</span><span class="p">,</span>
+        <span class="nv">$country</span><span class="o">-&gt;</span><span class="nf">id</span><span class="p">()</span><span class="o">-&gt;</span><span class="nf">value</span><span class="p">(),</span>
+    <span class="p">);</span>
+    <span class="nv">$this</span><span class="o">-&gt;</span><span class="nf">assertEquals</span><span class="p">(</span>
+        <span class="s1">'France'</span><span class="p">,</span>
+        <span class="nv">$country</span><span class="o">-&gt;</span><span class="nf">name</span><span class="p">()</span><span class="o">-&gt;</span><span class="nf">value</span><span class="p">(),</span>
+    <span class="p">);</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Ce test permet de décrire précisément ce qui est attendu en sortie de la méthode <strong>Factory</strong> create. Dans une démarche <strong>TDD</strong>, le but est d’obtenir un test vert (c’est-à-dire réussi) le plus rapidement possible (c’est-à-dire en succès).</p>
+
+<p>Lors de la première exécution du test, une erreur remonte immédiatement : la classe n’existe pas.</p>
+
+<p><img src="/assets/images/2025-02-17/first-step-test.png" alt="First error Unit Test" /></p>
+
+<p>Cette situation, tout à fait normale, fait partie intégrante de la démarche <strong>TDD</strong>. Chaque étape de correction vise à résoudre l’erreur actuelle pour progressivement construire une implémentation validée par les tests.</p>
+
+<p>Pour obtenir un test vert rapidement, j’ai donc commencé par créer l’<strong>Entity Country</strong>, ce qui a permis de modifier le message d’erreur.</p>
+
+<p><img src="/assets/images/2025-02-17/first-bis-step-test.png" alt="Second error Unit Test" /></p>
+
+<p>J’ai ensuite créé une method <strong><em>create</em></strong> dans l’<strong>Entity Country</strong>. Dans un premier temps, cela ne fait rien, mais elle permet de faire progresser le passage au vert du test.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Domain\Entity</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">Country</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">create</span><span class="p">():</span> <span class="kt">self</span>
+    <span class="p">{</span>
+
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Le message d’erreur dit maintenant que le <strong>Value Object CountryId</strong> n’existe pas.</p>
+
+<p><img src="/assets/images/2025-02-17/second-step-test.png" alt="Third error Unit Test" /></p>
+
+<p>Afin de régler le problème, je le crée, mais le plus simplement possible.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Domain\ValueObject</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">CountryId</span>
+<span class="p">{</span>
+    
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Le message suivant précise qu’il ne trouve pas la méthode fromString, que je rajoute également.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Domain\ValueObject</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">CountryId</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">fromString</span><span class="p">(</span><span class="kt">string</span> <span class="nv">$value</span><span class="p">):</span> <span class="kt">self</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nc">self</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>On a désormais un message qui dit que le Value Object CountryName n’existe pas.</p>
+
+<p><img src="/assets/images/2025-02-17/third-step-test.png" alt="Fourth error Unit Test" /></p>
+
+<p>Je crée donc cette classe, et comme lors de la création du Value Object CountryId, j’anticipe en ajoutant une method fromString.</p>
+
+<h3 id="vision-du-futur">Vision du futur</h3>
+
+<p>L’idée est de n’anticiper que de petites portions de code, étape par étape, afin de rester concentré sur l’objectif principal : faire passer le test au vert le plus vite possible.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Domain\ValueObject</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">CountryName</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">fromString</span><span class="p">(</span><span class="kt">string</span> <span class="nv">$value</span><span class="p">):</span> <span class="kt">self</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nc">self</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Le message d’erreur des tests indique maintenant que la méthode Factory de l’Entity Country ne retourne pas d’Entity. Pour résoudre ce problème, j’adopte l’approche la plus simple possible.</p>
+
+<p><img src="/assets/images/2025-02-17/fifth-step-test.png" alt="Fifth error Unit Test" /></p>
+
+<p>Pour le corriger je fais en sorte que la méthode <strong><em>create</em></strong> retourne une <strong>Entity Country</strong>.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Domain\Entity</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">Country</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">create</span><span class="p">():</span> <span class="kt">self</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nc">self</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Maintenant, la method retourne bien une <strong>Entity</strong>, mais les tests signalent une nouvelle erreur : l’absence de Method pour exposer mon <strong>id</strong>. Ce genre de problème se reproduira également pour l’attribut <strong>name</strong>.</p>
+
+<p><img src="/assets/images/2025-02-17/sixth-step-test.png" alt="Sixth error Unit Test" /></p>
+
+<p>Je vais maintenant devoir créer ces Method. Avant de lex implémenter, il est crucial de savoir ce qu’elles doivent retourner. Pour aller au plus simple, elles vont renvoyer exactement ce que le test attend qu’elles retournent.</p>
+
+<p>Ce qui nous donne donc :</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Domain\Entity</span><span class="p">;</span>
+
+<span class="kn">use</span> <span class="nc">App\Country\Domain\ValueObject\CountryId</span><span class="p">;</span>
+<span class="kn">use</span> <span class="nc">App\Country\Domain\ValueObject\CountryName</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">Country</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">create</span><span class="p">():</span> <span class="kt">self</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nc">self</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">id</span><span class="p">():</span> <span class="kt">CountryId</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nc">CountryId</span><span class="o">::</span><span class="nf">fromString</span><span class="p">(</span><span class="s1">'af785dbb-4ac1-4786-a5aa-1fed08f6ec26'</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">name</span><span class="p">():</span> <span class="kt">CountryName</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nc">CountryName</span><span class="o">::</span><span class="nf">fromString</span><span class="p">(</span>
+            <span class="s1">'France'</span>
+        <span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Le test devrait maintenant être réussi. Cependant, dans les <strong>Value Object</strong>, il manque la method <strong><em>value</em></strong> pour récupérer leur valeur. Je vais donc l’ajouter.</p>
+
+<p>Une autre problématique réside dans l’assignation de la valeur passée dans la méthode <strong><em>fromString</em></strong>. Je vais régler ces deux problèmes en une seule opération.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Domain\ValueObject</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">CountryId</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">private</span> <span class="kt">string</span> <span class="nv">$value</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{}</span>
+
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">fromString</span><span class="p">(</span><span class="kt">string</span> <span class="nv">$value</span><span class="p">):</span> <span class="kt">self</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nc">self</span><span class="p">(</span><span class="nv">$value</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">value</span><span class="p">():</span> <span class="kt">string</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Domain\ValueObject</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">CountryName</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">private</span> <span class="kt">string</span> <span class="nv">$value</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{}</span>
+
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">fromString</span><span class="p">(</span><span class="kt">string</span> <span class="nv">$value</span><span class="p">):</span> <span class="kt">self</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nc">self</span><span class="p">(</span><span class="nv">$value</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">value</span><span class="p">():</span> <span class="kt">string</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Voici donc à quoi ressemble les <strong>Value Object</strong> à ce stade. L’objectif de faire passer les tests au vert est atteint, ce qui est parfait.</p>
+
+<p><img src="/assets/images/2025-02-17/seventh-step-test.png" alt="Seventh error Unit Test" /></p>
+
+<p>Tout cela est bien beau, mais nous avons un peu triché en mettant les valeurs en dur dans l’<strong>Entity</strong>. Nous avons atteint l’objectif du test rapidement, de la manière la plus naïve possible. Il faut désormais aborder la deuxième étape : refactorer le code pour l’améliorer et le rendre vraiment fonctionnel.</p>
+
+<h3 id="deuxième-étape-rendre-le-code-fonctionnel">Deuxième étape : rendre le code fonctionnel</h3>
+
+<p>Pour cela, il faut que l’<strong>Entity Country</strong> dispose de deux propriétés distinctes pour l’<strong>id</strong> et le <strong>name</strong>. Il faut ensuite que les method <strong><em>id</em></strong> et <strong><em>name</em></strong> retournent les valeurs des propriétés. Le refactoring doit être réalisé par petites étapes, en veillant à ne travailler que sur ce qui est couvert par le test. Puisque le test de cet exemple se concentre sur la method <strong>create</strong>, je vais me limiter à refactorer du code qui concerne cette method, sans toucher à d’autres <strong>Entities</strong>.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Domain\Entity</span><span class="p">;</span>
+
+<span class="kn">use</span> <span class="nc">App\Country\Domain\ValueObject\CountryId</span><span class="p">;</span>
+<span class="kn">use</span> <span class="nc">App\Country\Domain\ValueObject\CountryName</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">Country</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">private</span> <span class="kt">CountryId</span> <span class="nv">$id</span><span class="p">,</span>
+        <span class="k">private</span> <span class="kt">CountryName</span> <span class="nv">$name</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{}</span>
+
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">create</span><span class="p">():</span> <span class="kt">self</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nc">self</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">id</span><span class="p">():</span> <span class="kt">CountryId</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">id</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">name</span><span class="p">():</span> <span class="kt">CountryName</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Voilà quoi ressemble l’<strong>Entity</strong>. Relançons maintenant les tests pour voir si cela marche toujours.</p>
+
+<p><img src="/assets/images/2025-02-17/eighth-step-test.png" alt="Eighth error Unit Test" /></p>
+
+<p>Et là, c’est le drame ! Le test est cassé. Retour à la case départ : le faire passer vert au plus vite.
+D’après le message d’erreur, le constructeur de l’<strong>Entity Country</strong> doit prendre deux paramètres. Or, en regardant de plus près le code de l’<strong>Entity</strong>, on remarque qu’aucun argument n’est passé au constructeur dans la method <strong>create</strong>. Il faut cependant que cette method prenne ces deux paramètres pour pouvoir les transmettre au <strong><em>constructeur</em></strong> de l’<strong>Entity</strong>.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Domain\Entity</span><span class="p">;</span>
+
+<span class="kn">use</span> <span class="nc">App\Country\Domain\ValueObject\CountryId</span><span class="p">;</span>
+<span class="kn">use</span> <span class="nc">App\Country\Domain\ValueObject\CountryName</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">Country</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">private</span> <span class="kt">CountryId</span> <span class="nv">$id</span><span class="p">,</span>
+        <span class="k">private</span> <span class="kt">CountryName</span> <span class="nv">$name</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{}</span>
+
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">create</span><span class="p">(</span>
+        <span class="kt">CountryId</span> <span class="nv">$id</span><span class="p">,</span>
+        <span class="kt">CountryName</span> <span class="nv">$name</span><span class="p">,</span>
+    <span class="p">):</span> <span class="kt">self</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nc">self</span><span class="p">(</span>
+            <span class="nv">$id</span><span class="p">,</span>
+            <span class="nv">$name</span><span class="p">,</span>
+        <span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">id</span><span class="p">():</span> <span class="kt">CountryId</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">id</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">name</span><span class="p">():</span> <span class="kt">CountryName</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>En relançant le test, celui-ci est désormais dans le vert.</p>
+
+<p><img src="/assets/images/2025-02-17/nineth-step-test.png" alt="Nineth error Unit Test" /></p>
+
+<p>On a donc créé la method <strong>create</strong> de l’<strong>Entity Country</strong> en suivant les bonnes pratiques du TDD.</p>
+
+<h3 id="ce-quil-faut-retenir">Ce qu’il faut retenir</h3>
+
+<p>En appliquant le <strong>TDD</strong>, on peut être sûr que le test reflète parfaitement le besoin du métier et que ce dernier est correctement validé. Je vous recommande de l’adopter autant que possible, car cela facilite la conception de vos use case métier et garantit que votre code métier à un code coverage le plus proche possible des 100%.</p>
+
+<h2 id="ajouter-de-la-valeur-aux-value-object">Ajouter de la valeur aux Value Object</h2>
+
+<p>Pour renforcer la valeur des <strong>Value Objects</strong>, il est essentiel d’ajouter des vérifications sur leur contenu. On peut par exemple valider que la <strong>Value Object</strong> <strong><em>CountryId</em></strong> est bien un <strong><em>UUID</em></strong>: pour cela, on peut utiliser une librairie existante ou écrire son propre code. Il faut, bien entendu, commencer par écrire un test, puis implémenter la validation dans l’<strong>Entity</strong> correspondante.</p>
+
+<p>Voici à quoi ressemble le test :</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+</pre></td><td class="code"><pre><span class="k">public</span> <span class="k">function</span> <span class="n">testCreateBadIdNotUuid</span><span class="p">():</span> <span class="kt">void</span>
+<span class="p">{</span>
+    <span class="nv">$this</span><span class="o">-&gt;</span><span class="nf">expectException</span><span class="p">(</span><span class="nc">\InvalidArgumentException</span><span class="o">::</span><span class="n">class</span><span class="p">);</span>
+
+    <span class="nc">Country</span><span class="o">::</span><span class="nf">create</span><span class="p">(</span>
+        <span class="nc">CountryId</span><span class="o">::</span><span class="nf">fromString</span><span class="p">(</span><span class="s1">'12'</span><span class="p">),</span>
+        <span class="nc">CountryName</span><span class="o">::</span><span class="nf">fromString</span><span class="p">(</span><span class="s1">'France'</span><span class="p">),</span>
+    <span class="p">);</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Sans surprise, il ne passe pas.</p>
+
+<p><img src="/assets/images/2025-02-17/ten-step-test.png" alt="Ten error Unit Test" /></p>
+
+<p>Pour faire passer le test au vert facilement, on doit ajouter une vérification dans le <em>Value Object</em> pour s’assurer que la valeur passée est bien un <strong><em>UUID</em></strong>.</p>
+
+<p>Pour cela, j’utilise la librairie PHP : https://github.com/webmozarts/assert. Premièrement, je l’installe en suivant la documentation officielle. Ensuite, il suffit d’ajouter la vérification appropriée pour émettre l’exception voulue.
+Voici le code de la <strong>Value Object</strong> mis à jour :</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Domain\ValueObject</span><span class="p">;</span>
+
+<span class="kn">use</span> <span class="nc">Webmozart\Assert\Assert</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">CountryId</span>
+<span class="p">{</span>
+    <span class="k">private</span> <span class="kt">string</span> <span class="nv">$value</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="kt">string</span> <span class="nv">$value</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{</span>
+        <span class="nc">Assert</span><span class="o">::</span><span class="nf">uuid</span><span class="p">(</span><span class="nv">$value</span><span class="p">);</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">value</span> <span class="o">=</span> <span class="nv">$value</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">fromString</span><span class="p">(</span><span class="kt">string</span> <span class="nv">$value</span><span class="p">):</span> <span class="kt">self</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nc">self</span><span class="p">(</span><span class="nv">$value</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">value</span><span class="p">():</span> <span class="kt">string</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Le test devrait passer :</p>
+
+<p><img src="/assets/images/2025-02-17/eleven-step-test.png" alt="Eleven error Unit Test" /></p>
+
+<p>Parfait !
+Ce <strong>Domain</strong>, très simple et avec peu de règles, est terminé. Dans le futur nous verrons des <strong>Domain</strong> plus complexes.</p>
+
+<h2 id="mise-en-place-des-use-case">Mise en place des use case</h2>
+
+<p>Nous allons maintenant développer les use case dans le Domain que nous venons de créer.</p>
+
+<h3 id="création-du-country">Création du Country</h3>
+
+<p>Nous commençons par importer des produits depuis un fichier récupéré sur Internet.</p>
+
+<p><img src="/assets/images/2025-02-17/import-country-usecase.png" alt="Import countries use case" /></p>
+
+<p>La première étape est d’écrire le test du <strong>Primary Adapter</strong> qui est la <strong><em>Command Symfony ImportCountryCommand</em></strong>.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+</pre></td><td class="code"><pre><span class="k">public</span> <span class="k">function</span> <span class="n">testExecute</span><span class="p">():</span> <span class="kt">void</span>
+<span class="p">{</span>
+    <span class="k">self</span><span class="o">::</span><span class="nf">bootkernel</span><span class="p">();</span>
+    <span class="nv">$application</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Application</span><span class="p">(</span><span class="k">self</span><span class="o">::</span><span class="nv">$kernel</span><span class="p">);</span>
+    <span class="nv">$command</span> <span class="o">=</span> <span class="nv">$application</span><span class="o">-&gt;</span><span class="nf">find</span><span class="p">(</span><span class="s1">'country:import'</span><span class="p">);</span>
+    <span class="nv">$commandTester</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">CommandTester</span><span class="p">(</span><span class="nc">Scommand</span><span class="p">);</span>
+    <span class="nv">$commandTester</span><span class="o">-&gt;</span><span class="nf">execute</span><span class="p">([]);</span>
+    <span class="nv">$commandTester</span><span class="o">-&gt;</span><span class="nf">assertCommandIsSuccessful</span><span class="p">();</span>
+    <span class="nv">$output</span> <span class="o">=</span> <span class="nv">$commandTester</span><span class="o">-&gt;</span><span class="nf">getDisplay</span><span class="p">();</span>
+    <span class="nv">$this</span><span class="o">-&gt;</span><span class="nf">assertStringContainsString</span><span class="p">(</span><span class="s1">'[OK] Countries created: 241'</span><span class="p">,</span> <span class="nv">$output</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Le code en question est lié à <strong><em>Symfony</em></strong>, donc je ne m’y attarderai pas trop longtemps. L’essentiel ici est de comprendre l’assert qui valide le test : à la fin de la commande, le message ‘[OK] Countries created: 241’ doit s’afficher, avec le nombre de pays créés.</p>
+
+<p>Une fois cette vérification faite, nous pouvons passer au code. Celui de la <strong><em>Command Symfony</em></strong> n’est pas très intéressant car il s’agit principalement de la lecture de fichier, ce qui relève de la couche <strong>Infrastructure</strong>, et non du <strong>Domain</strong>.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+</pre></td><td class="code"><pre><span class="k">private</span> <span class="k">function</span> <span class="n">handleFile</span><span class="p">():</span> <span class="kt">int</span>
+<span class="p">{</span>
+    <span class="nv">$countryCreated</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="nv">$handle</span> <span class="o">=</span> <span class="nb">fopen</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="nf">getFilePath</span><span class="p">(),</span> <span class="s1">'r'</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nv">$handle</span> <span class="o">===</span> <span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nc">\RuntimeException</span><span class="p">(</span><span class="s1">'Unable to open file'</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">while</span> <span class="p">((</span><span class="nv">$data</span> <span class="o">=</span> <span class="nb">fgetcsv</span><span class="p">(</span><span class="nv">$handle</span><span class="p">,</span> <span class="mi">1000</span><span class="p">))</span> <span class="o">!==</span> <span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$data</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">===</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">continue</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">commandBus</span><span class="o">-&gt;</span><span class="nf">dispatch</span><span class="p">(</span><span class="k">new</span> <span class="nc">CreateCountryCommand</span><span class="p">(</span><span class="nv">$data</span><span class="p">[</span><span class="mi">4</span><span class="p">]));</span>
+        <span class="o">++</span><span class="nv">$countryCreated</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="nb">fclose</span><span class="p">(</span><span class="nv">$handle</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="nv">$countryCreated</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<h3 id="vision-du-futur-1">Vision du futur</h3>
+
+<p>Ici on pourrait aussi mettre en forme un tableau avec tous les noms des pays et dispatch une <strong>Command</strong> pour importer tous les pays d’un seul coup. Cette façon de faire respecterais plus le <strong>CQRS</strong> ou le changement sur le système doit être englobé dans une seule <strong>Command</strong>. Je pense que ce changement devrait être fait.</p>
+
+<p>Voici un extrait de la <strong><em>Command Symfony</em></strong>, qui montre la partie responsable de la lecture du fichier et du dispatch de la <strong>Command</strong>. Je passe rapidement cette section, car elle n’est pas cruciale ici. Ce qu’il faut retenir, c’est que le fichier est lu et une <strong>Command</strong> est dispatchée avec le <strong>nom du pays</strong> qu’il contient. Pour ce <strong>Domain</strong>, je n’ai besoin d’aucune autre information, donc je ne prends que le <strong>nom</strong>. Cependant, on pourrait très bien imaginer traiter d’autres informations, selon les besoins du <strong>Domain Country</strong> ou du <strong>Core Domain</strong>.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Application\Command</span><span class="p">;</span>
+
+<span class="kn">use</span> <span class="nc">TegCorp\SharedKernelBundle\Application\Command\CommandInterface</span><span class="p">;</span>
+
+<span class="cd">/**
+ * @implements CommandInterface&lt;void&gt;
+ */</span>
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">CreateCountryCommand</span> <span class="kd">implements</span> <span class="nc">CommandInterface</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="nv">$name</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>La Command vraiment très simple ne prend qu’un <strong>nom</strong>.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Application\Command</span><span class="p">;</span>
+
+<span class="na">#[AsCommandHandler]</span>
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">CreateCountryCommandHandler</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">private</span> <span class="kt">CountryRepositoryInterface</span> <span class="nv">$countryRepository</span><span class="p">,</span>
+        <span class="k">private</span> <span class="kt">DomainEventDispatcherInterface</span> <span class="nv">$dispatcher</span><span class="p">,</span>
+        <span class="k">private</span> <span class="kt">IdFactory</span> <span class="nv">$idFactory</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{</span>
+    <span class="p">}</span>
+
+    <span class="cd">/**
+     * @throws CountryAlreadyExistsException
+     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__invoke</span><span class="p">(</span><span class="kt">CreateCountryCommand</span> <span class="nv">$command</span><span class="p">):</span> <span class="kt">void</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="n">countryRepository</span><span class="o">-&gt;</span><span class="nf">ofName</span><span class="p">(</span><span class="nc">CountryName</span><span class="o">::</span><span class="nf">fromString</span><span class="p">(</span><span class="nv">$command</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">))</span> <span class="o">!==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nc">CountryAlreadyExistsException</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="nv">$country</span> <span class="o">=</span> <span class="nc">Country</span><span class="o">::</span><span class="nf">create</span><span class="p">(</span>
+            <span class="nc">CountryId</span><span class="o">::</span><span class="nf">fromString</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="n">idFactory</span><span class="o">-&gt;</span><span class="nf">create</span><span class="p">()),</span>
+            <span class="nc">CountryName</span><span class="o">::</span><span class="nf">fromString</span><span class="p">(</span><span class="nv">$command</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">),</span>
+        <span class="p">);</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">countryRepository</span><span class="o">-&gt;</span><span class="nf">add</span><span class="p">(</span><span class="nv">$country</span><span class="p">);</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">dispatcher</span><span class="o">-&gt;</span><span class="nf">dispatch</span><span class="p">(</span><span class="nv">$country</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Le <strong>CommandHandler</strong> fait partie de la couche <strong>Application</strong>, il permet de relier la couche <strong>Infrastructure</strong> au <strong>Domain</strong>. Le <strong>CommandHandler</strong> vérifie si le <strong>Country</strong> n’existe pas déjà, en utilisant le <strong>Repository</strong>. Si le pays existe déjà, on <strong><em>throw une exception</em></strong>. On peut se permettre de rechercher par <strong>nom</strong> pour garantir l’unicité, car chaque <strong>nom de pays</strong> est unique. La méthode <strong>Factory</strong> de notre <strong>Entity Country</strong> permet de créer le Pays. Une fois créé, on l’enregistre dans le système à l’aide du <strong>Repository</strong>. Pour finir, on dispatche les <strong>Domain Events</strong> liés à la création du <strong>Country</strong>.</p>
+
+<p>Le <strong>Repository</strong> est une notion du <strong>Domain</strong>, nous créons donc une <strong><em>Interface</em></strong> pour utiliser l’<strong>Inversion de dépendance</strong> : on déclare une <strong><em>Interface</em></strong> dans le <strong>Domain</strong> pour un <strong>Repository</strong> (avec la method <strong><em>add</em></strong> par exemple), et on implémente dans la couche <strong>Infrastructure</strong> la method <strong><em>add</em></strong> du <strong>Repository</strong> qui enregistre la nouvelle <strong>Entity</strong> dans la base de données (dans notre cas).</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Domain\Repository</span><span class="p">;</span>
+
+<span class="cd">/**
+ * @extends RepositoryInterface&lt;Country&gt;
+ */</span>
+<span class="kd">interface</span> <span class="nc">CountryRepositoryInterface</span> <span class="kd">extends</span> <span class="nc">RepositoryInterface</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">ofName</span><span class="p">(</span><span class="kt">CountryName</span> <span class="nv">$name</span><span class="p">):</span> <span class="kt">?Country</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">add</span><span class="p">(</span><span class="kt">Country</span> <span class="nv">$country</span><span class="p">):</span> <span class="kt">void</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Dans le <strong>Repository</strong>, on définit les deux method nécessaires pour interagir avec le Domain :
+– <strong><em>ofName</em></strong>: récupère un pays par son <strong>nom</strong> ou renvoie <strong><em>null</em></strong> si le <strong>Country</strong> n’existe pas
+– <strong><em>add</em></strong>: se charge d’enregistrer le <strong>Country</strong> dans le système</p>
+
+<p>L’implémentation du Repository n’est pas vraiment intéressante, car liée à Symfony, mais je la montre quand même pour compléter l’implémentation.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Infrastructure\Doctrine\Repository</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="kd">class</span> <span class="nc">CountryDoctrineRepository</span> <span class="kd">implements</span> <span class="nc">CountryRepositoryInterface</span>
+<span class="p">{</span>
+    <span class="k">private</span> <span class="k">const</span> <span class="no">string</span> <span class="no">ENTITY_CLASS</span> <span class="o">=</span> <span class="nc">CountryDoctrine</span><span class="o">::</span><span class="n">class</span><span class="p">;</span>
+    <span class="k">private</span> <span class="k">const</span> <span class="no">string</span> <span class="no">ALIAS</span> <span class="o">=</span> <span class="s1">'country'</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span><span class="kt">EntityManagerInterface</span> <span class="nv">$entityManager</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">parent</span><span class="o">::</span><span class="nf">__construct</span><span class="p">(</span><span class="nv">$entityManager</span><span class="p">,</span> <span class="k">self</span><span class="o">::</span><span class="no">ENTITY_CLASS</span><span class="p">,</span> <span class="k">self</span><span class="o">::</span><span class="no">ALIAS</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="na">#[\Override]</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">ofName</span><span class="p">(</span>
+        <span class="kt">CountryName</span> <span class="nv">$name</span><span class="p">,</span>
+    <span class="p">):</span> <span class="kt">?Country</span> <span class="p">{</span>
+        <span class="nv">$country</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">entityManager</span>
+            <span class="o">-&gt;</span><span class="nf">getRepository</span><span class="p">(</span><span class="k">self</span><span class="o">::</span><span class="no">ENTITY_CLASS</span><span class="p">)</span>
+            <span class="o">-&gt;</span><span class="nf">findOneBy</span><span class="p">([</span><span class="s1">'name'</span> <span class="o">=&gt;</span> <span class="nv">$name</span><span class="o">-&gt;</span><span class="nf">value</span><span class="p">()])</span>
+        <span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$country</span> <span class="o">===</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="kc">null</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="nc">CountryMapper</span><span class="o">::</span><span class="nf">toDomain</span><span class="p">(</span><span class="nv">$country</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="na">#[\Override]</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">add</span><span class="p">(</span><span class="kt">Country</span> <span class="nv">$country</span><span class="p">):</span> <span class="kt">void</span>
+    <span class="p">{</span>
+        <span class="nv">$countryDoctrine</span> <span class="o">=</span> <span class="nc">CountryMapper</span><span class="o">::</span><span class="nf">toInfrastructurePersist</span><span class="p">(</span><span class="nv">$country</span><span class="p">);</span>
+
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">entityManager</span><span class="o">-&gt;</span><span class="nf">persist</span><span class="p">(</span><span class="nv">$countryDoctrine</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">entityManager</span><span class="o">-&gt;</span><span class="nb">flush</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Je ne rentrerais pas dans le détail de l’implémentation, mais nous retrouvons bien les deux method déclarées dans l’<strong><em>Interface</em></strong> du <strong>Repository</strong>.</p>
+
+<p>Cela clôt l’implémentation du use case pour la création du <strong>Country</strong>. Je vais maintenant ajouter une petite fonctionnalité dans le <strong>Domain</strong>: l’enregistrement d’un <strong>Domain Event</strong> lorsqu’une <strong>Entity Country</strong> est créée.</p>
+
+<h2 id="enregistrement-dun-domain-event-lié-à-la-création-dune-entity-country">Enregistrement d’un Domain Event lié à la création d’une Entity Country</h2>
+
+<p>Pour cela, j’ai créé une <strong><em>Interface</em></strong> que les <strong>Entity</strong> doivent implémenter pour enregistrer leurs événements métiers. Ensuite, j’utilise un <strong><em>Event Dispatcher</em></strong> pour dispatcher tous les événements d’une <strong>Entity</strong>.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Shared\Domain\Entity</span><span class="p">;</span>
+
+<span class="kn">use</span> <span class="nc">App\Shared\Domain\Event\DomainEventInterface</span><span class="p">;</span>
+
+<span class="kd">interface</span> <span class="nc">EntityWithDomainEventInterface</span>
+<span class="p">{</span>
+    <span class="cd">/**
+     * @return DomainEventInterface[]
+     */</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">getRecordedEvent</span><span class="p">():</span> <span class="kt">array</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">recordEvent</span><span class="p">(</span><span class="kt">DomainEventInterface</span> <span class="nv">$event</span><span class="p">):</span> <span class="kt">void</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">eraseRecordedEvents</span><span class="p">():</span> <span class="kt">void</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Cette <strong><em>Interface</em></strong> définit trois method :</p>
+<ol>
+  <li><strong><em>getRecordedEvent</em></strong> : permet de récupérer tous les <strong>Domain Event</strong> enregistrés sur une <strong>Entity</strong></li>
+  <li><strong><em>recordEvent</em></strong> : permet d’enregistrer un <strong>Domain Event</strong> suite à une action sur le <strong>Domain</strong></li>
+  <li><strong><em>eraseRecordedEvents</em></strong> : permet de supprimer les <strong>Domain Event</strong> quand on les a dispatchés afin de ne pas les traiter deux fois.</li>
+</ol>
+
+<p>Pour créer les method liées à cette <strong><em>Interface</em></strong>, il est nécessaire que les <strong>Domain Event</strong> eux-mêmes implémentent une <strong><em>Interface</em></strong>. Celle-ci sera ensuite utilisée pour typer les <strong>Domain Event</strong>.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Shared\Domain\Event</span><span class="p">;</span>
+
+<span class="kd">interface</span> <span class="nc">DomainEventInterface</span>
+<span class="p">{</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Il faut ensuite faire en sorte que l’<strong>Entity Country</strong> implémente ces method. Pour ce faire, j’ai choisi de créer un <strong><em>Trait PHP</em></strong>, ce qui permet d’ajouter ces method à l’<strong>Entity</strong> sans avoir à utiliser l’héritage.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Shared\Domain\Entity</span><span class="p">;</span>
+
+<span class="kn">use</span> <span class="nc">App\Shared\Domain\Event\DomainEventInterface</span><span class="p">;</span>
+
+<span class="kd">trait</span> <span class="nc">EntityDomainEventTrait</span>
+<span class="p">{</span>
+    <span class="k">private</span> <span class="k">static</span> <span class="kt">array</span> <span class="nv">$recordedEvents</span> <span class="o">=</span> <span class="p">[];</span>
+
+    <span class="na">#[\Override]</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">getRecordedEvent</span><span class="p">():</span> <span class="kt">array</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="k">self</span><span class="o">::</span><span class="nv">$recordedEvents</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="na">#[\Override]</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">recordEvent</span><span class="p">(</span><span class="kt">DomainEventInterface</span> <span class="nv">$event</span><span class="p">):</span> <span class="kt">void</span>
+    <span class="p">{</span>
+        <span class="k">self</span><span class="o">::</span><span class="nv">$recordedEvents</span><span class="p">[]</span> <span class="o">=</span> <span class="nv">$event</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="na">#[\Override]</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">eraseRecordedEvents</span><span class="p">():</span> <span class="kt">void</span>
+    <span class="p">{</span>
+        <span class="k">self</span><span class="o">::</span><span class="nv">$recordedEvents</span> <span class="o">=</span> <span class="p">[];</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Pour que l’<strong>Entity Country</strong> dispose de ces method, elle doit implémenter l’<strong><em>Interface</em></strong> <strong><em>EntityWithDomainEventInterface</em></strong> et utiliser le <strong><em>trait</em></strong> <strong><em>EntityDomainEventTrait</em></strong>.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Domain\Entity</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="kd">class</span> <span class="nc">Country</span> <span class="kd">implements</span> <span class="nc">EntityWithDomainEventInterface</span>
+<span class="p">{</span>
+    <span class="kn">use</span> <span class="nc">EntityDomainEventTrait</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">private</span> <span class="kt">CountryId</span> <span class="nv">$id</span><span class="p">,</span>
+        <span class="k">private</span> <span class="kt">CountryName</span> <span class="nv">$name</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">create</span><span class="p">(</span>
+        <span class="kt">CountryId</span> <span class="nv">$id</span><span class="p">,</span>
+        <span class="kt">CountryName</span> <span class="nv">$name</span><span class="p">,</span>
+    <span class="p">):</span> <span class="kt">self</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nc">self</span><span class="p">(</span>
+            <span class="nv">$id</span><span class="p">,</span>
+            <span class="nv">$name</span><span class="p">,</span>
+        <span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">id</span><span class="p">():</span> <span class="kt">CountryId</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">id</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">name</span><span class="p">():</span> <span class="kt">CountryName</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>À présent, l’<strong>Entity Country</strong> est prête à enregistrer des <strong>Domain Event</strong>. L’<strong><em>Event</em></strong> sera en charge d’indiquer qu’un <strong>Country</strong> a été créé, avec pour valeurs l’<strong>id</strong> et le <strong>nom</strong>. Pour cela, on crée un <strong><em>Event</em></strong> <strong>CountryCreated</strong>. Un <strong>Domain Event</strong> doit être identifiable pour vérifier que le même <strong><em>Event</em></strong> n’est pas consommé plusieurs fois. Il doit également avoir une date de publication afin d’être traité dans l’ordre d’enregistrement,  si cet ordre à de l’importance.</p>
+
+<p>Pour répondre à ces besoins, j’ai donc créé une <strong><em>Abstract Class</em></strong> qui permet d’ajouter ces informations à chaque <strong><em>Event</em></strong> que l’on créera en faisant de l’héritage.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Shared\Domain\Event</span><span class="p">;</span>
+
+<span class="kn">use</span> <span class="nc">Ramsey\Uuid\Uuid</span><span class="p">;</span>
+<span class="kn">use</span> <span class="nc">Symfony\Contracts\EventDispatcher\Event</span><span class="p">;</span>
+
+<span class="k">abstract</span> <span class="kd">class</span> <span class="nc">DomainEvent</span> <span class="kd">extends</span> <span class="nc">Event</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">readonly</span> <span class="kt">string</span> <span class="nv">$id</span><span class="p">;</span>
+    <span class="k">public</span> <span class="k">readonly</span> <span class="kt">int</span> <span class="nv">$occurredOn</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+    <span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">id</span> <span class="o">=</span> <span class="nc">Uuid</span><span class="o">::</span><span class="nf">uuid4</span><span class="p">()</span><span class="o">-&gt;</span><span class="nf">toString</span><span class="p">();</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">occurredOn</span> <span class="o">=</span> <span class="nb">time</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>On crée l’<strong><em>Event</em></strong> qui va étendre cette classe et implémenter l’<strong><em>Interface</em></strong> précédemment créée.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Domain\Event</span><span class="p">;</span>
+
+<span class="kn">use</span> <span class="nc">App\Shared\Domain\Event\DomainEvent</span><span class="p">;</span>
+<span class="kn">use</span> <span class="nc">App\Shared\Domain\Event\DomainEventInterface</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="kd">class</span> <span class="nc">CountryCreated</span> <span class="kd">extends</span> <span class="nc">DomainEvent</span> <span class="kd">implements</span> <span class="nc">DomainEventInterface</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="nv">$countryId</span><span class="p">,</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="nv">$name</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{</span>
+        <span class="k">parent</span><span class="o">::</span><span class="nf">__construct</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Il ne reste plus qu’à enregistrer cet <strong><em>Event</em></strong> au moment de la création du <strong>Country</strong>.
+Enregistrer un <strong>Domain Event</strong> à chaque action dans le système n’est pas obligatoire. C’est cependant très utile pour respecter la <strong>séparation des préoccupations</strong> (<strong>Separation of concerns).</strong> Le <strong>CommandHandler</strong> a pour but de créer l’<strong>Entity Country</strong>. Si d’autres actions doivent être effectuées, elles ne doivent pas faire partie de ce <strong>CommandHandler</strong>. Il est donc important de segmenter le code et les <strong><em>Event</em></strong> : c’est un bon moyen d’y parvenir. On pourrait imaginer que cet <strong><em>Event</em></strong> soit écouté pour effectuer des actions telles que l’écriture du <strong>Country</strong> dans le modèle de lecture, ou pour notifier un autre <strong>Domain</strong> qu’un nouveau <strong>Country</strong> a été créé.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Domain\Entity</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="kd">class</span> <span class="nc">Country</span> <span class="kd">implements</span> <span class="nc">EntityWithDomainEventInterface</span>
+<span class="p">{</span>
+    <span class="kn">use</span> <span class="nc">EntityDomainEventTrait</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">private</span> <span class="kt">CountryId</span> <span class="nv">$id</span><span class="p">,</span>
+        <span class="k">private</span> <span class="kt">CountryName</span> <span class="nv">$name</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">create</span><span class="p">(</span>
+        <span class="kt">CountryId</span> <span class="nv">$id</span><span class="p">,</span>
+        <span class="kt">CountryName</span> <span class="nv">$name</span><span class="p">,</span>
+    <span class="p">):</span> <span class="kt">self</span> <span class="p">{</span>
+        <span class="nv">$country</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">self</span><span class="p">(</span>
+            <span class="nv">$id</span><span class="p">,</span>
+            <span class="nv">$name</span><span class="p">,</span>
+        <span class="p">);</span>
+
+        <span class="nv">$country</span><span class="o">::</span><span class="nf">recordEvent</span><span class="p">(</span>
+            <span class="k">new</span> <span class="nc">CountryCreated</span><span class="p">(</span>
+                <span class="nv">$country</span><span class="o">-&gt;</span><span class="n">id</span><span class="o">-&gt;</span><span class="nf">value</span><span class="p">(),</span>
+                <span class="nv">$country</span><span class="o">-&gt;</span><span class="n">name</span><span class="o">-&gt;</span><span class="nf">value</span><span class="p">(),</span>
+            <span class="p">)</span>
+        <span class="p">);</span>
+
+        <span class="k">return</span> <span class="nv">$country</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">id</span><span class="p">():</span> <span class="kt">CountryId</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">id</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">name</span><span class="p">():</span> <span class="kt">CountryName</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>L’<strong><em>Event</em></strong> est enregistré et sera dispatché dans le <strong>CommandHandler</strong> grâce à cette ligne :</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+</pre></td><td class="code"><pre><span class="nv">$this</span><span class="o">-&gt;</span><span class="n">dispatcher</span><span class="o">-&gt;</span><span class="nf">dispatch</span><span class="p">(</span><span class="nv">$country</span><span class="p">);</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<h3 id="vision-du-futur-2">Vision du futur</h3>
+<p>C’est très important de <strong><em>dispatch</em></strong> le <strong>Domain Event</strong> après que l’action soit effectué.</p>
+
+<p>La partie création de l’Entity Country est désormais terminée.</p>
+
+<h2 id="exposer-une-liste-de-pays">Exposer une liste de pays</h2>
+
+<p>On souhaite maintenant pouvoir exposer une liste de pays via une API. Pour cela nous allons utiliser <strong><em>Api Platform</em></strong> (https://api-platform.com/), un framework pour faciliter la création d’API REST en respectant les standards du secteur.</p>
+
+<h3 id="explication-rapide-dapi-platform">Explication rapide d’API Platform</h3>
+
+<p>Ce framework très complet se base sur des classes <strong><em>Resources</em></strong> dans lesquelles nous déclarons des opérations. Ces opérations sont liées aux verbes HTTP (GET, PUT, POST, DELETE) et chaque opération se voit attribuer des <strong><em>Processor</em></strong> ( pour PUT, DELETE et POST) et des <strong><em>Provider</em></strong> (pour GET).</p>
+
+<p><strong><em>API Platform</em></strong> offre une multitude d’autres fonctionnalités. J’en effleure seulement la surface pour que vous puissiez comprendre ce qui se passe en lisant le code.</p>
+
+<p>Voilà mon use case :</p>
+
+<p><img src="/assets/images/2025-02-17/reas-list-product.png" alt="Read list product" /></p>
+
+<p>Comme expliqué plus haut, en utilisant <strong><em>Api Platform</em></strong>, le <strong>Primary Adapter</strong> est le <strong><em>Country Provider</em></strong>.</p>
+
+<p>J’écris d’abord un test rapide pour récupérer la liste de mes pays.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+</pre></td><td class="code"><pre><span class="k">public</span> <span class="k">function</span> <span class="n">testGetCollection</span><span class="p">():</span> <span class="kt">void</span>
+<span class="p">{</span>
+    <span class="nv">$this</span><span class="o">-&gt;</span><span class="nf">get</span><span class="p">(</span><span class="s1">'/api/countries'</span><span class="p">);</span>
+
+    <span class="nv">$this</span><span class="o">-&gt;</span><span class="nf">assertResponseIsSuccessful</span><span class="p">();</span>
+    <span class="nv">$this</span><span class="o">-&gt;</span><span class="nf">assertJsonContains</span><span class="p">([</span>
+        <span class="s1">'@context'</span> <span class="o">=&gt;</span> <span class="s1">'/api/contexts/Country'</span><span class="p">,</span>
+        <span class="s1">'@id'</span> <span class="o">=&gt;</span> <span class="s1">'/api/countries'</span><span class="p">,</span>
+        <span class="s1">'@type'</span> <span class="o">=&gt;</span> <span class="s1">'Collection'</span><span class="p">,</span>
+        <span class="s1">'member'</span> <span class="o">=&gt;</span> <span class="p">[</span>
+            <span class="p">[</span>
+                <span class="s1">'@type'</span> <span class="o">=&gt;</span> <span class="s1">'Country'</span><span class="p">,</span>
+                <span class="s1">'name'</span> <span class="o">=&gt;</span> <span class="s1">'Afghanistan'</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="p">[</span>
+                <span class="s1">'@type'</span> <span class="o">=&gt;</span> <span class="s1">'Country'</span><span class="p">,</span>
+                <span class="s1">'name'</span> <span class="o">=&gt;</span> <span class="s1">'Afrique du Sud'</span><span class="p">,</span>
+            <span class="p">],</span>
+        <span class="p">],</span>
+        <span class="s1">'totalItems'</span> <span class="o">=&gt;</span> <span class="mi">30</span><span class="p">,</span>
+    <span class="p">]);</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Dans ce test, je fais une requête sur l’uri ‘/api/countries’, qui renvoie une liste de <strong>Country</strong> avec leur <strong>nom</strong>. Je dois récupérer trente pays, car la pagination est activée pour les récupérer par lot de trente (ce qui géré est par défaut par <strong><em>Api Platform</em></strong>).</p>
+
+<p>On commence donc pas créer la <strong><em>Resource Country</em></strong>, qui est différente de l’<strong>Entity Country</strong>. La responsabilité de cette <strong><em>Resource</em></strong> est de porter l’opération d’<strong><em>Api Platform</em></strong> et de renvoyer les données via notre API.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Infrastructure\ApiPlatform\Resource</span><span class="p">;</span>
+
+<span class="err">#</span><span class="p">[</span><span class="nf">ApiResource</span><span class="p">(</span>
+    <span class="n">shortName</span><span class="o">:</span> <span class="s1">'Country'</span><span class="p">,</span>
+<span class="p">)]</span>
+<span class="err">#</span><span class="p">[</span><span class="nf">GetCollection</span><span class="p">(</span>
+    <span class="s1">'/countries'</span><span class="p">,</span>
+    <span class="n">filters</span><span class="o">:</span> <span class="p">[</span><span class="nc">CountryFilter</span><span class="o">::</span><span class="n">class</span><span class="p">],</span>
+    <span class="n">provider</span><span class="o">:</span> <span class="nc">GetCountryCollectionProvider</span><span class="o">::</span><span class="n">class</span><span class="p">,</span>
+<span class="p">)]</span>
+<span class="k">final</span> <span class="kd">class</span> <span class="nc">GetCollectionCountryResource</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="na">#[ApiProperty(readable: false, writable: false, identifier: true)]</span>
+        <span class="k">public</span> <span class="kt">?AbstractUid</span> <span class="nv">$id</span> <span class="o">=</span> <span class="kc">null</span><span class="p">,</span>
+        <span class="na">#[ApiProperty]</span>
+        <span class="k">public</span> <span class="kt">?string</span> <span class="nv">$name</span> <span class="o">=</span> <span class="kc">null</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">fromModel</span><span class="p">(</span><span class="kt">Country</span> <span class="nv">$country</span><span class="p">):</span> <span class="kt">self</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nc">self</span><span class="p">(</span>
+            <span class="k">new</span> <span class="nc">Uuid</span><span class="p">(</span><span class="nv">$country</span><span class="o">-&gt;</span><span class="n">id</span><span class="p">),</span>
+            <span class="nv">$country</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span>
+        <span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>On ajoute une opération de type <strong><em>GetCollection</em></strong>, car on veut récupérer une liste de <strong><em>Resource Country</em></strong>. On spécifie un <strong><em>Provider</em></strong> qui sera chargé de dispatcher la <strong>Query</strong> pour lire les données dans le système. On définit ensuite les champs à retourner, on ajoute l’<strong>attribut</strong> <strong><em>ApiProperty</em></strong> pour indiquer que ces propriétés doivent être exposées via l’API. Pour finir, on définit une method <strong><em>fromModel</em></strong> qui permet de transformer les <strong>Entity Country</strong> en <strong>Resource Country</strong>.</p>
+
+<p>J’ai également précisé un argument <strong><em>filters</em></strong> dans l’<strong><em>attribut</em></strong> <strong><em>GetCollection</em></strong> Cela permet de définir un ou plusieurs filtres, utiles pour le côté interne d’<strong><em>Api Platform</em></strong> et pour apparaître dans les metadata du retour de notre API. Je ne rentre pas plus dans le détail car ce n’est pas essentiel pour l’apprentissage du <strong>DDD</strong>, mais voilà à quoi ressemble cette classe <strong><em>CountryFilter</em></strong>.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Infrastructure\ApiPlatform\OpenApi</span><span class="p">;</span>
+
+<span class="kn">use</span> <span class="nc">ApiPlatform\Metadata\FilterInterface</span><span class="p">;</span>
+<span class="kn">use</span> <span class="nc">Symfony\Component\PropertyInfo\Type</span><span class="p">;</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">CountryFilter</span> <span class="kd">implements</span> <span class="nc">FilterInterface</span>
+<span class="p">{</span>
+    <span class="na">#[\Override]</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">getDescription</span><span class="p">(</span><span class="kt">string</span> <span class="nv">$resourceClass</span><span class="p">):</span> <span class="kt">array</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="s1">'name'</span> <span class="o">=&gt;</span> <span class="p">[</span>
+                <span class="s1">'property'</span> <span class="o">=&gt;</span> <span class="s1">'name'</span><span class="p">,</span>
+                <span class="s1">'type'</span> <span class="o">=&gt;</span> <span class="nc">Type</span><span class="o">::</span><span class="no">BUILTIN_TYPE_STRING</span><span class="p">,</span>
+                <span class="s1">'required'</span> <span class="o">=&gt;</span> <span class="kc">false</span><span class="p">,</span>
+            <span class="p">],</span>
+        <span class="p">];</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Ainsi que le Provider :</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Infrastructure\ApiPlatform\State\Provider</span><span class="p">;</span>
+
+<span class="cd">/**
+ * @implements ProviderInterface&lt;GetCollectionCountryResource&gt;
+ */</span>
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">GetCountryCollectionProvider</span> <span class="kd">implements</span> <span class="nc">ProviderInterface</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">private</span> <span class="kt">QueryBusInterface</span> <span class="nv">$queryBus</span><span class="p">,</span>
+        <span class="k">private</span> <span class="kt">Pagination</span> <span class="nv">$pagination</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{</span>
+    <span class="p">}</span>
+
+    <span class="cd">/**
+     * @return Paginator&lt;GetCollectionCountryResource&gt;|list&lt;GetCollectionCountryResource&gt;
+     */</span>
+    <span class="na">#[\Override]</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">provide</span><span class="p">(</span><span class="kt">Operation</span> <span class="nv">$operation</span><span class="p">,</span> <span class="kt">array</span> <span class="nv">$uriVariables</span> <span class="o">=</span> <span class="p">[],</span> <span class="kt">array</span> <span class="nv">$context</span> <span class="o">=</span> <span class="p">[]):</span> <span class="kt">array</span><span class="o">|</span><span class="nc">Paginator</span>
+    <span class="p">{</span>
+        <span class="nv">$name</span> <span class="o">=</span> <span class="nv">$context</span><span class="p">[</span><span class="s1">'filters'</span><span class="p">][</span><span class="s1">'name'</span><span class="p">]</span> <span class="o">??</span> <span class="kc">null</span><span class="p">;</span>
+        <span class="nv">$page</span> <span class="o">=</span> <span class="nv">$limit</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="n">pagination</span><span class="o">-&gt;</span><span class="nf">isEnabled</span><span class="p">(</span><span class="nv">$operation</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nv">$page</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">pagination</span><span class="o">-&gt;</span><span class="nf">getPage</span><span class="p">(</span><span class="nv">$context</span><span class="p">);</span>
+            <span class="nv">$limit</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">pagination</span><span class="o">-&gt;</span><span class="nf">getLimit</span><span class="p">(</span><span class="nv">$operation</span><span class="p">,</span> <span class="nv">$context</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="nv">$models</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">queryBus</span><span class="o">-&gt;</span><span class="nf">ask</span><span class="p">(</span><span class="k">new</span> <span class="nc">GetCountriesQuery</span><span class="p">(</span><span class="nv">$name</span><span class="p">,</span> <span class="nv">$page</span><span class="p">,</span> <span class="nv">$limit</span><span class="p">));</span>
+
+        <span class="nv">$resources</span> <span class="o">=</span> <span class="p">[];</span>
+
+        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$models</span> <span class="k">as</span> <span class="nv">$model</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$resources</span><span class="p">[]</span> <span class="o">=</span> <span class="nc">GetCollectionCountryResource</span><span class="o">::</span><span class="nf">fromModel</span><span class="p">(</span><span class="nv">$model</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="kc">null</span> <span class="o">!==</span> <span class="nv">$paginator</span> <span class="o">=</span> <span class="nv">$models</span><span class="o">-&gt;</span><span class="nf">paginator</span><span class="p">())</span> <span class="p">{</span>
+            <span class="nv">$resources</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Paginator</span><span class="p">(</span>
+                <span class="k">new</span> <span class="nc">\ArrayIterator</span><span class="p">(</span><span class="nv">$resources</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">float</span><span class="p">)</span> <span class="nv">$paginator</span><span class="o">-&gt;</span><span class="nf">getCurrentPage</span><span class="p">(),</span>
+                <span class="p">(</span><span class="n">float</span><span class="p">)</span> <span class="nv">$paginator</span><span class="o">-&gt;</span><span class="nf">getItemsPerPage</span><span class="p">(),</span>
+                <span class="p">(</span><span class="n">float</span><span class="p">)</span> <span class="nv">$paginator</span><span class="o">-&gt;</span><span class="nf">getLastPage</span><span class="p">(),</span>
+                <span class="p">(</span><span class="n">float</span><span class="p">)</span> <span class="nv">$paginator</span><span class="o">-&gt;</span><span class="nf">getTotalItems</span><span class="p">(),</span>
+            <span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="nv">$resources</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Ce <strong><em>Provider</em></strong> contient beaucoup de code spécifique à <strong><em>Api Platform</em></strong>, mais je vais quand même prendre un peu de temps pour vous l’expliquer, car cela touche à certaines réflexions concernant le <strong>DDD</strong>.</p>
+
+<p>Premièrement, je récupère le filtre par nom s’il est spécifié et j’initialise la pagination à 0. Puis je récupère la pagination dans l’url si c’est activé. Ensuite, je dispatche la <strong>Query</strong>, responsable de lire les données dans le système. Après cela, je parcours toutes les <strong>Entity</strong> retournées par la <strong>Query</strong> et je les transforme en <strong><em>Resource</em></strong>. Pour finir, je mets en place la pagination (si elle est activée pour cette <strong><em>Resource</em></strong>) et je retourne les <strong><em>Resources</em></strong>, qu’elles soient paginées ou non.</p>
+
+<h3 id="vision-du-futur-3">Vision du futur</h3>
+<p>Gérer la pagination ne relève pas de la responsabilité du <strong>QueryHandler</strong>, c’est une problématique de l’<strong>Infrastructure</strong> ou de <strong>l’Application</strong>. À nous de nous adapter. Pour faire cela, il faudrait mettre en place un modèle de lecture (via des projections), mais je me suis rendu compte de cela plus tard. Pour l’instant, la pagination est donc portée par le <strong>Repository</strong>, ce qui n’est pas une bonne pratique. Si vous voulez un exemple plus détaillé, j’ai écrit un article à ce sujet que vous pouvez retrouver <a href="https://huguesgobet.com/fr/other/2024-12-16"><em>ici</em></a>.</p>
+
+<p>Maintenant que tout cela est plus clair, voici la Query qu’on dispatch.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Application\Query</span><span class="p">;</span>
+
+<span class="kn">use</span> <span class="nc">App\Country\Application\Adapter\CountryRepositoryInterface</span><span class="p">;</span>
+<span class="kn">use</span> <span class="nc">App\Shared\Application\Query\QueryInterface</span><span class="p">;</span>
+
+<span class="cd">/**
+ * @implements QueryInterface&lt;CountryRepositoryInterface&gt;
+ */</span>
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">GetCountriesQuery</span> <span class="kd">implements</span> <span class="nc">QueryInterface</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">public</span> <span class="kt">?string</span> <span class="nv">$name</span> <span class="o">=</span> <span class="kc">null</span><span class="p">,</span>
+        <span class="k">public</span> <span class="kt">?int</span> <span class="nv">$page</span> <span class="o">=</span> <span class="kc">null</span><span class="p">,</span>
+        <span class="k">public</span> <span class="kt">?int</span> <span class="nv">$limit</span> <span class="o">=</span> <span class="kc">null</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Ensuite le QueryHandler :</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Application\Query</span><span class="p">;</span>
+
+<span class="kn">use</span> <span class="nc">App\Country\Application\Adapter\CountryRepositoryInterface</span><span class="p">;</span>
+<span class="kn">use</span> <span class="nc">App\Shared\Application\Query\AsQueryHandler</span><span class="p">;</span>
+
+<span class="na">#[AsQueryHandler]</span>
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">GetCountriesQueryHandler</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">private</span> <span class="kt">CountryRepositoryInterface</span> <span class="nv">$countryRepository</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__invoke</span><span class="p">(</span><span class="kt">GetCountriesQuery</span> <span class="nv">$query</span><span class="p">):</span> <span class="kt">CountryRepositoryInterface</span>
+    <span class="p">{</span>
+        <span class="nv">$countryRepository</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">countryRepository</span><span class="p">;</span>
+
+        <span class="nv">$countryRepository</span> <span class="o">=</span> <span class="nv">$countryRepository</span><span class="o">-&gt;</span><span class="nf">sortName</span><span class="p">();</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$query</span><span class="o">-&gt;</span><span class="n">name</span> <span class="o">!==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$countryRepository</span> <span class="o">=</span> <span class="nv">$countryRepository</span><span class="o">-&gt;</span><span class="nf">withName</span><span class="p">(</span><span class="nv">$query</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$query</span><span class="o">-&gt;</span><span class="n">page</span> <span class="o">!==</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="nv">$query</span><span class="o">-&gt;</span><span class="n">limit</span> <span class="o">!==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$countryRepository</span> <span class="o">=</span> <span class="nv">$countryRepository</span><span class="o">-&gt;</span><span class="nf">withPagination</span><span class="p">(</span><span class="nv">$query</span><span class="o">-&gt;</span><span class="n">page</span><span class="p">,</span> <span class="nv">$query</span><span class="o">-&gt;</span><span class="n">limit</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="nv">$countryRepository</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Dans ce <strong>QueryHandler</strong>, je récupère le <strong>Repository</strong> et je lui indique que je veux trier les résultats par nom. Si un filtre par <strong>nom</strong> est spécifié, je demande au <strong>Repository</strong> de ne récupérer que les <strong>Country</strong> correspondant à ce filtre. Si la pagination est activée, je demande au <strong>Repository</strong> de l’appliquer (donc de limiter à trente éléments et de récupérer les <strong>Country</strong> à partir de la page 2, par exemple).</p>
+
+<p>Ce qui peut surprendre, c’est le retour du <strong>Repository</strong> : cela permet de coller au fonctionnement d’<strong><em>Api Platform</em></strong> et à sa manière de gérer la pagination. Le fait de retourner le <strong>Repository</strong> n’enfreint aucune règle du <strong>CQRS</strong> ou du <strong>DDD</strong>, c’est pourquoi j’ai accepté de suivre cette approche.</p>
+
+<h3 id="vision-du-futur-4">Vision du futur</h3>
+
+<p>En utilisant un modèle de lecture, je pourrais m’abstraire de cette partie un peu étrange et le <strong>Repository</strong> ne porterait plus la responsabilité de la lecture, ce qui éliminerait les bizarrerie au sein du <strong>Domain</strong>.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Domain\Repository</span><span class="p">;</span>
+
+<span class="kn">use</span> <span class="nc">App\Country\Domain\Entity\Country</span><span class="p">;</span>
+<span class="kn">use</span> <span class="nc">App\Shared\Domain\Repository\RepositoryInterface</span><span class="p">;</span>
+
+<span class="cd">/**
+* @extends RepositoryInterface&lt;Country&gt;
+*/</span>
+<span class="kd">interface</span> <span class="nc">CountryRepositoryInterface</span> <span class="kd">extends</span> <span class="nc">RepositoryInterface</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">ofName</span><span class="p">(</span><span class="kt">string</span> <span class="nc">Sname</span><span class="p">):</span> <span class="kt">?Country</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">add</span> <span class="p">(</span><span class="kt">Country</span> <span class="nc">Scountry</span><span class="p">):</span> <span class="kt">void</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">withName</span><span class="p">(</span><span class="kt">string</span> <span class="nv">$name</span><span class="p">):</span> <span class="kt">self</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">sortName</span><span class="p">():</span> <span class="kt">self</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Le <strong>Repository</strong> ressemble à ça. Je vais vous montrer l’implémentation avec <strong><em>Doctrine</em></strong>. Je ne l’expliquerai pas car cela n’a aucun intérêt pour l’article. Je trouve cependant important de vous montrer tout le code pour cette partie.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+</pre></td><td class="code"><pre><span class="cp">&lt;?php</span>
+
+<span class="k">declare</span><span class="p">(</span><span class="n">strict_types</span><span class="o">=</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="kn">namespace</span> <span class="nn">App\Country\Infrastructure\Doctrine\Repository</span><span class="p">;</span>
+
+<span class="cd">/**
+ * @extends DoctrineRepository&lt;Country&gt;
+ */</span>
+<span class="k">final</span> <span class="kd">class</span> <span class="nc">CountryDoctrineAdapter</span> <span class="kd">extends</span> <span class="nc">DoctrineRepository</span> <span class="kd">implements</span> <span class="nc">CountryAdapterInterface</span>
+<span class="p">{</span>
+    <span class="k">private</span> <span class="k">const</span> <span class="no">string</span> <span class="no">ENTITY_CLASS</span> <span class="o">=</span> <span class="nc">Country</span><span class="o">::</span><span class="n">class</span><span class="p">;</span>
+    <span class="k">private</span> <span class="k">const</span> <span class="no">string</span> <span class="no">ALIAS</span> <span class="o">=</span> <span class="s1">'country'</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="kt">DocumentManager</span> <span class="nv">$documentManager</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{</span>
+        <span class="k">parent</span><span class="o">::</span><span class="nf">__construct</span><span class="p">(</span><span class="nv">$documentManager</span><span class="p">,</span> <span class="k">self</span><span class="o">::</span><span class="no">ENTITY_CLASS</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="na">#[\Override]</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">ofName</span><span class="p">(</span><span class="kt">string</span> <span class="nv">$name</span><span class="p">):</span> <span class="kt">?Country</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">documentManager</span><span class="o">-&gt;</span><span class="nf">getRepository</span><span class="p">(</span><span class="k">self</span><span class="o">::</span><span class="no">ENTITY_CLASS</span><span class="p">)</span><span class="o">-&gt;</span><span class="nf">findOneBy</span><span class="p">([</span><span class="s1">'name'</span> <span class="o">=&gt;</span> <span class="nv">$name</span><span class="p">]);</span>
+    <span class="p">}</span>
+
+    <span class="na">#[\Override]</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">add</span><span class="p">(</span><span class="kt">Country</span> <span class="nv">$country</span><span class="p">):</span> <span class="kt">void</span>
+    <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">documentManager</span><span class="o">-&gt;</span><span class="nf">persist</span><span class="p">(</span><span class="nv">$country</span><span class="p">);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">documentManager</span><span class="o">-&gt;</span><span class="nb">flush</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="na">#[\Override]</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">withName</span><span class="p">(</span>
+        <span class="kt">string</span> <span class="nv">$name</span><span class="p">,</span>
+    <span class="p">):</span> <span class="kt">self</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="nf">filter</span><span class="p">(</span><span class="k">static</span> <span class="k">function</span> <span class="p">(</span><span class="kt">Builder</span> <span class="nv">$qb</span><span class="p">)</span> <span class="k">use</span> <span class="p">(</span><span class="nv">$name</span><span class="p">):</span> <span class="kt">void</span> <span class="p">{</span>
+            <span class="nv">$qb</span><span class="o">-&gt;</span><span class="nf">field</span><span class="p">(</span><span class="s1">'name'</span><span class="p">)</span><span class="o">-&gt;</span><span class="nf">text</span><span class="p">(</span><span class="nv">$name</span><span class="p">);</span>
+        <span class="p">});</span>
+    <span class="p">}</span>
+
+    <span class="na">#[\Override]</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">sortName</span><span class="p">():</span> <span class="kt">self</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="nf">filter</span><span class="p">(</span><span class="k">static</span> <span class="k">function</span> <span class="p">(</span><span class="kt">Builder</span> <span class="nv">$qb</span><span class="p">):</span> <span class="kt">void</span> <span class="p">{</span>
+            <span class="nv">$qb</span><span class="o">-&gt;</span><span class="nb">sort</span><span class="p">(</span><span class="s1">'name'</span><span class="p">,</span> <span class="s1">'ASC'</span><span class="p">);</span>
+        <span class="p">});</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>C’était un article très copieux ! J’y ai abordé le <strong>TDD</strong> ainsi que la création d’un <strong>Supporting Domain</strong>. Je vous ai également présenté deux nouveaux use case de <strong>Domain</strong>. Pourtant, je n’ai pas encore eu l’occasion d’aborder le <strong>Core Domain</strong>. Ce sera l’objet d’un prochain article, où je discuterai de la communication entre les <strong>Domain</strong> et les nombreuses erreurs que j’ai commises à ce sujet.</p>
+</div><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2025-02-17T08:00:00+00:00"><!-- start custom article footer snippet -->
+
+<!-- end custom article footer snippet -->
+</footer>
+<div class="article__section-navigator clearfix"><div class="previous"><span>PRÉCÉDENT</span><a href="/fr/ddd-logbook/2025-01-27">Journal de bord de l’apprentissage du Domain-Driven Design : Jour 4</a></div></div></div>
+
+</div>
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    $(function() {
+      var $this ,$scroll;
+      var $articleContent = $('.js-article-content');
+      var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+      var scroll = hasSidebar ? '.js-page-main' : 'html, body';
+      $scroll = $(scroll);
+
+      $articleContent.find('.highlight').each(function() {
+        $this = $(this);
+        $this.attr('data-lang', $this.find('code').attr('data-lang'));
+      });
+      $articleContent.find('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]').each(function() {
+        $this = $(this);
+        $this.append($('<a class="anchor d-print-none" aria-hidden="true"></a>').html('<i class="fas fa-anchor"></i>'));
+      });
+      $articleContent.on('click', '.anchor', function() {
+        $scroll.scrollToAnchor('#' + $(this).parent().attr('id'), 400);
+      });
+    });
+  });
+})();
+</script>
+</div><section class="page__comments d-print-none"></section></article><!-- start custom main bottom snippet -->
+
+<!-- end custom main bottom snippet -->
+</div>
+            </div></div></div><div class="page__footer d-print-none">
+<footer class="footer py-4 js-page-footer">
+  <div class="main"><div itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Hugues Gobet"><meta itemprop="url" content="https://huguesgobet.com"><meta itemprop="description" content="Développeur web, lead développeur et passionné d'architecture logicielle."><div class="footer__author-links"><div class="author-links">
+  <ul class="menu menu--nowrap menu--inline"><link itemprop="url" href="https://huguesgobet.com"><li title="Envoyez-moi un courriel.">
+      <a class="button button--circle mail-button" itemprop="email" href="mailto:hugues.gobet@gmail.com" target="_blank">
+        <i class="fas fa-envelope"></i>
+      </a><li title="Suivez-moi sur Medium.">
+        <a class="button button--circle medium-button" itemprop="sameAs" href="https://medium.com/https://medium.com/@hugues.gobet" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M834.7 279.8l61.3-58.9V208H683.7L532.4 586.4 360.3 208H137.7v12.9l71.6 86.6c7 6.4 10.6 15.8 9.7 25.2V673c2.2 12.3-1.7 24.8-10.3 33.7L128 805v12.7h228.6v-12.9l-80.6-98a39.99 39.99 0 0 1-11.1-33.7V378.7l200.7 439.2h23.3l172.6-439.2v349.9c0 9.2 0 11.1-6 17.2l-62.1 60.3V819h301.2v-12.9l-59.9-58.9c-5.2-4-7.9-10.7-6.8-17.2V297a18.1 18.1 0 0 1 6.8-17.2z"></path>
+</svg>
+</div>
+        </a>
+      </li><li title="Suivez-moi sur Linkedin.">
+        <a class="button button--circle linkedin-button" itemprop="sameAs" href="https://www.linkedin.com/in/https://www.linkedin.com/in/hugues-gobet-854756bb/" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M260.096 155.648c0 27.307008-9.899008 50.516992-29.696 69.632-19.796992 19.115008-45.396992 28.672-76.8 28.672-30.036992 0-54.612992-9.556992-73.728-28.672-19.115008-19.115008-28.672-42.324992-28.672-69.632 0-28.672 9.556992-52.224 28.672-70.656 19.115008-18.432 44.372992-27.648 75.776-27.648 31.403008 0 56.32 9.216 74.752 27.648 18.432 18.432 28.331008 41.984 29.696 70.656 0 0 0 0 0 0m-202.752 808.96c0 0 0-632.832 0-632.832 0 0 196.608 0 196.608 0 0 0 0 632.832 0 632.832 0 0-196.608 0-196.608 0 0 0 0 0 0 0m313.344-430.08c0-58.708992-1.364992-126.292992-4.096-202.752 0 0 169.984 0 169.984 0 0 0 10.24 88.064 10.24 88.064 0 0 4.096 0 4.096 0 40.96-68.267008 105.812992-102.4 194.56-102.4 68.267008 0 123.220992 22.868992 164.864 68.608 41.643008 45.739008 62.464 113.664 62.464 203.776 0 0 0 374.784 0 374.784 0 0-196.608 0-196.608 0 0 0 0-350.208 0-350.208 0-91.476992-33.451008-137.216-100.352-137.216-47.787008 0-81.236992 24.576-100.352 73.728-4.096 8.192-6.144 24.576-6.144 49.152 0 0 0 364.544 0 364.544 0 0-198.656 0-198.656 0 0 0 0-430.08 0-430.08 0 0 0 0 0 0" />
+</svg>
+</div>
+        </a>
+      </li><li title="Suivez-moi sur Github.">
+        <a class="button button--circle github-button" itemprop="sameAs" href="https://github.com/https://github.com/tegbessou" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path class="svgpath" data-index="path_0" fill="#272636" d="M0 525.2c0 223.6 143.3 413.7 343 483.5 26.9 6.8 22.8-12.4 22.8-25.4l0-88.7c-155.3 18.2-161.5-84.6-172-101.7-21.1-36-70.8-45.2-56-62.3 35.4-18.2 71.4 4.6 113.1 66.3 30.2 44.7 89.1 37.2 119 29.7 6.5-26.9 20.5-50.9 39.7-69.6C248.8 728.2 181.7 630 181.7 513.2c0-56.6 18.7-108.7 55.3-150.7-23.3-69.3 2.2-128.5 5.6-137.3 66.5-6 135.5 47.6 140.9 51.8 37.8-10.2 80.9-15.6 129.1-15.6 48.5 0 91.8 5.6 129.8 15.9 12.9-9.8 77-55.8 138.8-50.2 3.3 8.8 28.2 66.7 6.3 135 37.1 42.1 56 94.6 56 151.4 0 117-67.5 215.3-228.8 243.7 26.9 26.6 43.6 63.4 43.6 104.2l0 128.8c0.9 10.3 0 20.5 17.2 20.5C878.1 942.4 1024 750.9 1024 525.3c0-282.9-229.3-512-512-512C229.1 13.2 0 242.3 0 525.2L0 525.2z" />
+</svg>
+</div>
+        </a>
+      </li></ul>
+</div>
+</div>
+    </div><div class="site-info mt-2">
+      <div>© Blog - Hugues Gobet 2021,
+        Powered by <a title="Jekyll is a simple, blog-aware, static site generator." href="http://jekyllrb.com/">Jekyll</a> & <a
+        title="TeXt is a super customizable Jekyll theme." href="https://github.com/kitian616/jekyll-TeXt-theme">TeXt Theme</a>.
+      </div>
+    </div>
+  </div>
+</footer>
+</div></div>
+    </div><script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $body = $('body'), $window = $(window);
+    var $pageRoot = $('.js-page-root'), $pageMain = $('.js-page-main');
+    var activeCount = 0;
+    function modal(options) {
+      var $root = this, visible, onChange, hideWhenWindowScroll = false;
+      var scrollTop;
+      function setOptions(options) {
+        var _options = options || {};
+        visible = _options.initialVisible === undefined ? false : show;
+        onChange = _options.onChange;
+        hideWhenWindowScroll = _options.hideWhenWindowScroll;
+      }
+      function init() {
+        setState(visible);
+      }
+      function setState(isShow) {
+        if (isShow === visible) {
+          return;
+        }
+        visible = isShow;
+        if (visible) {
+          activeCount++;
+          scrollTop = $(window).scrollTop() || $pageMain.scrollTop();
+          $root.addClass('modal--show');
+          $pageMain.scrollTop(scrollTop);
+          activeCount === 1 && ($pageRoot.addClass('show-modal'), $body.addClass('of-hidden'));
+          hideWhenWindowScroll && window.hasEvent('touchstart') && $window.on('scroll', hide);
+          $window.on('keyup', handleKeyup);
+        } else {
+          activeCount > 0 && activeCount--;
+          $root.removeClass('modal--show');
+          $window.scrollTop(scrollTop);
+          activeCount === 0 && ($pageRoot.removeClass('show-modal'), $body.removeClass('of-hidden'));
+          hideWhenWindowScroll && window.hasEvent('touchstart') && $window.off('scroll', hide);
+          $window.off('keyup', handleKeyup);
+        }
+        onChange && onChange(visible);
+      }
+      function show() {
+        setState(true);
+      }
+      function hide() {
+        setState(false);
+      }
+      function handleKeyup(e) {
+        // Char Code: 27  ESC
+        if (e.which ===  27) {
+          hide();
+        }
+      }
+      setOptions(options);
+      init();
+      return {
+        show: show,
+        hide: hide,
+        $el: $root
+      };
+    }
+    $.fn.modal = modal;
+  });
+})();
+</script><div class="modal modal--overflow page__search-modal d-print-none js-page-search-modal"></div></div>
+
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function scrollToAnchor(anchor, duration, callback) {
+      var $root = this;
+      $root.animate({ scrollTop: $(anchor).position().top }, duration, function() {
+        window.history.replaceState(null, '', window.location.href.split('#')[0] + anchor);
+        callback && callback();
+      });
+    }
+    $.fn.scrollToAnchor = scrollToAnchor;
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function affix(options) {
+      var $root = this, $window = $(window), $scrollTarget, $scroll,
+        offsetBottom = 0, scrollTarget = window, scroll = window.document, disabled = false, isOverallScroller = true,
+        rootTop, rootLeft, rootHeight, scrollBottom, rootBottomTop,
+        hasInit = false, curState;
+
+      function setOptions(options) {
+        var _options = options || {};
+        _options.offsetBottom && (offsetBottom = _options.offsetBottom);
+        _options.scrollTarget && (scrollTarget = _options.scrollTarget);
+        _options.scroll && (scroll = _options.scroll);
+        _options.disabled !== undefined && (disabled = _options.disabled);
+        $scrollTarget = $(scrollTarget);
+        isOverallScroller = window.isOverallScroller($scrollTarget[0]);
+        $scroll = $(scroll);
+      }
+      function preCalc() {
+        top();
+        rootHeight = $root.outerHeight();
+        rootTop = $root.offset().top + (isOverallScroller ? 0 :  $scrollTarget.scrollTop());
+        rootLeft = $root.offset().left;
+      }
+      function calc(needPreCalc) {
+        needPreCalc && preCalc();
+        scrollBottom = $scroll.outerHeight() - offsetBottom - rootHeight;
+        rootBottomTop = scrollBottom - rootTop;
+      }
+      function top() {
+        if (curState !== 'top') {
+          $root.removeClass('fixed').css({
+            left: 0,
+            top: 0
+          });
+          curState = 'top';
+        }
+      }
+      function fixed() {
+        if (curState !== 'fixed') {
+          $root.addClass('fixed').css({
+            left: rootLeft + 'px',
+            top: 0
+          });
+          curState = 'fixed';
+        }
+      }
+      function bottom() {
+        if (curState !== 'bottom') {
+          $root.removeClass('fixed').css({
+            left: 0,
+            top: rootBottomTop + 'px'
+          });
+          curState = 'bottom';
+        }
+      }
+      function setState() {
+        var scrollTop = $scrollTarget.scrollTop();
+        if (scrollTop >= rootTop && scrollTop <= scrollBottom) {
+          fixed();
+        } else if (scrollTop < rootTop) {
+          top();
+        } else {
+          bottom();
+        }
+      }
+      function init() {
+        if(!hasInit) {
+          var interval, timeout;
+          calc(true); setState();
+          // run calc every 100 millisecond
+          interval = setInterval(function() {
+            calc();
+          }, 100);
+          timeout = setTimeout(function() {
+            clearInterval(interval);
+          }, 45000);
+          window.pageLoad.then(function() {
+            setTimeout(function() {
+              clearInterval(interval);
+              clearTimeout(timeout);
+            }, 3000);
+          });
+          $scrollTarget.on('scroll', function() {
+            disabled || setState();
+          });
+          $window.on('resize', function() {
+            disabled || (calc(true), setState());
+          });
+          hasInit = true;
+        }
+      }
+
+      setOptions(options);
+      if (!disabled) {
+        init();
+      }
+      $window.on('resize', window.throttle(function() {
+        init();
+      }, 200));
+      return {
+        setOptions: setOptions,
+        refresh: function() {
+          calc(true, { animation: false }); setState();
+        }
+      };
+    }
+    $.fn.affix = affix;
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function toc(options) {
+      var $root = this, $window = $(window), $scrollTarget, $scroller, $tocUl = $('<ul class="toc toc--ellipsis"></ul>'), $tocLi, $headings, $activeLast, $activeCur,
+        selectors = 'h1,h2,h3', container = 'body', scrollTarget = window, scroller = 'html, body', disabled = false,
+        headingsPos, scrolling = false, hasRendered = true, hasInit = false;
+
+      function setOptions(options) {
+        var _options = options || {};
+        _options.selectors && (selectors = _options.selectors);
+        _options.container && (container = _options.container);
+        _options.scrollTarget && (scrollTarget = _options.scrollTarget);
+        _options.scroller && (scroller = _options.scroller);
+        _options.disabled !== undefined && (disabled = _options.disabled);
+        $headings = $(container).find(selectors).filter('[id]');
+        $scrollTarget = $(scrollTarget);
+        $scroller = $(scroller);
+      }
+      function calc() {
+        headingsPos = [];
+        $headings.each(function() {
+          headingsPos.push(Math.floor($(this).position().top));
+        });
+      }
+      function setState(element, disabled) {
+        var scrollTop = $scrollTarget.scrollTop(), i;
+        if (disabled || !headingsPos || headingsPos.length < 1) { return; }
+        if (element) {
+          $activeCur = element;
+        } else {
+          for (i = 0; i < headingsPos.length; i++) {
+            if (scrollTop >= headingsPos[i]) {
+              $activeCur = $tocLi.eq(i);
+            } else {
+              $activeCur || ($activeCur = $tocLi.eq(i));
+              break;
+            }
+          }
+        }
+        $activeLast && $activeLast.removeClass('active');
+        ($activeLast = $activeCur).addClass('active');
+      }
+      function render() {
+        if(!hasRendered) {
+          $root.append($tocUl);
+          $headings.each(function() {
+            var $this = $(this);
+            $tocUl.append($('<li></li>').addClass('toc-' + $this.prop('tagName').toLowerCase())
+              .append($('<a></a>').text($this.text()).attr('href', '#' + $this.prop('id'))));
+          });
+          $tocLi = $tocUl.children('li');
+          $tocUl.on('click', 'a', function(e) {
+            e.preventDefault();
+            var $this = $(this);
+            scrolling = true;
+            setState($this.parent());
+            $scroller.scrollToAnchor($this.attr('href'), 400, function() {
+              scrolling = false;
+            });
+          });
+        }
+        hasRendered = true;
+      }
+      function init() {
+        var interval, timeout;
+        if(!hasInit) {
+          render(); calc(); setState(null, scrolling);
+          // run calc every 100 millisecond
+          interval = setInterval(function() {
+            calc();
+          }, 100);
+          timeout = setTimeout(function() {
+            clearInterval(interval);
+          }, 45000);
+          window.pageLoad.then(function() {
+            setTimeout(function() {
+              clearInterval(interval);
+              clearTimeout(timeout);
+            }, 3000);
+          });
+          $scrollTarget.on('scroll', function() {
+            disabled || setState(null, scrolling);
+          });
+          $window.on('resize', window.throttle(function() {
+            if (!disabled) {
+              render(); calc(); setState(null, scrolling);
+            }
+          }, 100));
+        }
+        hasInit = true;
+      }
+
+      setOptions(options);
+      if (!disabled) {
+        init();
+      }
+      $window.on('resize', window.throttle(function() {
+        init();
+      }, 200));
+      return {
+        setOptions: setOptions
+      };
+    }
+    $.fn.toc = toc;
+  });
+})();
+/*(function () {
+
+})();*/
+</script><script>
+  /* toc must before affix, since affix need to konw toc' height. */(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  var TOC_SELECTOR = window.TEXT_VARIABLES.site.toc.selectors;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window);
+    var $articleContent = $('.js-article-content');
+    var $tocRoot = $('.js-toc-root'), $col2 = $('.js-col-aside');
+    var toc;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+    var hasToc = $articleContent.find(TOC_SELECTOR).length > 0;
+
+    function disabled() {
+      return $col2.css('display') === 'none' || !hasToc;
+    }
+
+    tocDisabled = disabled();
+
+    toc = $tocRoot.toc({
+      selectors: TOC_SELECTOR,
+      container: $articleContent,
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      tocDisabled = disabled();
+      toc && toc.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window), $pageFooter = $('.js-page-footer');
+    var $pageAside = $('.js-page-aside');
+    var affix;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+
+    affix = $pageAside.affix({
+      offsetBottom: $pageFooter.outerHeight(),
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      scroll: hasSidebar ? $('.js-page-main').children() : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      affix && affix.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+    window.pageAsideAffix = affix;
+  });
+})();
+</script><script>
+  window.Lazyload.js('https://cdn.bootcss.com/mermaid/8.0.0-rc.8/mermaid.min.js', function() {
+    mermaid.initialize({
+      startOnLoad: true
+    });
+    mermaid.init(undefined, '.language-mermaid');
+  });
+</script>
+
+    </div>
+    <script>(function () {
+  var $root = document.getElementsByClassName('root')[0];
+  if (window.hasEvent('touchstart')) {
+    $root.dataset.isTouch = true;
+    document.addEventListener('touchstart', function(){}, false);
+  }
+})();
+</script>
+  </body>
+</html>
+
