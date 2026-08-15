@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main  # Remplacez par votre branche principale si différente
+  # Build quotidien : Jekyll exclut les articles à date future (`future: false`),
+  # un article daté d'après son merge n'apparaît donc qu'au build suivant.
+  schedule:
+    - cron: '0 9 * * *'  # 09:00 UTC, après l'heure de publication des articles (08:00)
+  workflow_dispatch:
 
 jobs:
   build-deploy:
