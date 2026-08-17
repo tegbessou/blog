@@ -1,7 +1,7 @@
 ---
 layout: article
 title: "The Future of This Blog"
-date:   2026-08-17 08:00:00
+date:   2026-08-17 00:00:00
 categories: other
 lang: en
 resume: "After several months on hold, this blog is starting again, but from a different angle: practice rather than theory. This article announces the end of the Logbook of Learning Domain-Driven Design, the start of a series on developing a complete project, Agojie, and the role AI will play in it."

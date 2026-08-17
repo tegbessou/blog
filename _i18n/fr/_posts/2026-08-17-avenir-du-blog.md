@@ -1,7 +1,7 @@
 ---
 layout: article
 title: "L’avenir du blog"
-date:   2026-08-17 08:00:00
+date:   2026-08-17 00:00:00
 categories: other
 lang: fr
 resume: "Après plusieurs mois d’arrêt, ce blog reprend, mais sur un autre angle : la pratique plutôt que la théorie. Cet article annonce la fin du journal de bord d’apprentissage du DDD, le démarrage d’une série sur le développement complet d’un projet, Agojie, et la place que l’IA y tiendra."
