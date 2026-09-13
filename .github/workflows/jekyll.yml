@@ -7,7 +7,7 @@ on:
   # Build quotidien : Jekyll exclut les articles à date future (`future: false`),
   # un article daté d'après son merge n'apparaît donc qu'au build suivant.
   schedule:
-    - cron: '0 9 * * *'  # 09:00 UTC, après l'heure de publication des articles (08:00)
+    - cron: '0 5 * * *'  # 05:00 UTC, soit 7h à Paris en heure d'été (6h en hiver)
   workflow_dispatch:
 
 jobs:

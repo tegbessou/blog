@@ -27,6 +27,22 @@ header:
 
   - titles:
       # @start locale config
+      en      : &EN       Agojie Logbook
+      en-GB   : *EN
+      en-US   : *EN
+      en-CA   : *EN
+      en-AU   : *EN
+      fr      : &FR       Journal Agojie
+      fr-BE   : *FR
+      fr-CA   : *FR
+      fr-CH   : *FR
+      fr-FR   : *FR
+      fr-LU   : *FR
+      # @end locale config
+    url: /agojie-journey
+
+  - titles:
+      # @start locale config
       en      : &EN       Other articles
       en-GB   : *EN
       en-US   : *EN
