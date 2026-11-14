@@ -1,0 +1,1036 @@
+<!DOCTYPE html><html lang="en">
+  <head><!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-6H5WPV9WFH"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+
+		gtag('config', 'G-6H5WPV9WFH');
+		
+	</script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>The First Code, and What I Decided Not to Fix - Blog - Hugues Gobet</title>
+
+<meta name="description" content="Agojie automates Dice Throne, a turn-based fighting board game played with dice. In the previous episode, after three days, I still hadn’t written a single l...">
+<link rel="canonical" href="https://huguesgobet.com/agojie-logbook/2026-10-19"><link rel="alternate" type="application/rss+xml" title="Blog - Hugues Gobet" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
+
+<meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/assets/browserconfig.xml">
+
+<meta name="theme-color" content="#ffffff">
+<!-- end favicons snippet --><link rel="stylesheet" href="/assets/css/main.css"><link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.1/css/all.css" ><!-- start custom head snippets -->
+
+<!-- end custom head snippets -->
+<script>(function() {
+  window.isArray = function(val) {
+    return Object.prototype.toString.call(val) === '[object Array]';
+  };
+  window.isString = function(val) {
+    return typeof val === 'string';
+  };
+
+  window.hasEvent = function(event) {
+    return 'on'.concat(event) in window.document;
+  };
+
+  window.isOverallScroller = function(node) {
+    return node === document.documentElement || node === document.body || node === window;
+  };
+
+  window.isFormElement = function(node) {
+    var tagName = node.tagName;
+    return tagName === 'INPUT' || tagName === 'SELECT' || tagName === 'TEXTAREA';
+  };
+
+  window.pageLoad = (function () {
+    var loaded = false, cbs = [];
+    window.addEventListener('load', function () {
+      var i;
+      loaded = true;
+      if (cbs.length > 0) {
+        for (i = 0; i < cbs.length; i++) {
+          cbs[i]();
+        }
+      }
+    });
+    return {
+      then: function(cb) {
+        cb && (loaded ? cb() : (cbs.push(cb)));
+      }
+    };
+  })();
+})();
+(function() {
+  window.throttle = function(func, wait) {
+    var args, result, thisArg, timeoutId, lastCalled = 0;
+
+    function trailingCall() {
+      lastCalled = new Date;
+      timeoutId = null;
+      result = func.apply(thisArg, args);
+    }
+    return function() {
+      var now = new Date,
+        remaining = wait - (now - lastCalled);
+
+      args = arguments;
+      thisArg = this;
+
+      if (remaining <= 0) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+        lastCalled = now;
+        result = func.apply(thisArg, args);
+      } else if (!timeoutId) {
+        timeoutId = setTimeout(trailingCall, remaining);
+      }
+      return result;
+    };
+  };
+})();
+(function() {
+  var Set = (function() {
+    var add = function(item) {
+      var i, data = this._data;
+      for (i = 0; i < data.length; i++) {
+        if (data[i] === item) {
+          return;
+        }
+      }
+      this.size ++;
+      data.push(item);
+      return data;
+    };
+
+    var Set = function(data) {
+      this.size = 0;
+      this._data = [];
+      var i;
+      if (data.length > 0) {
+        for (i = 0; i < data.length; i++) {
+          add.call(this, data[i]);
+        }
+      }
+    };
+    Set.prototype.add = add;
+    Set.prototype.get = function(index) { return this._data[index]; };
+    Set.prototype.has = function(item) {
+      var i, data = this._data;
+      for (i = 0; i < data.length; i++) {
+        if (this.get(i) === item) {
+          return true;
+        }
+      }
+      return false;
+    };
+    Set.prototype.is = function(map) {
+      if (map._data.length !== this._data.length) { return false; }
+      var i, j, flag, tData = this._data, mData = map._data;
+      for (i = 0; i < tData.length; i++) {
+        for (flag = false, j = 0; j < mData.length; j++) {
+          if (tData[i] === mData[j]) {
+            flag = true;
+            break;
+          }
+        }
+        if (!flag) { return false; }
+      }
+      return true;
+    };
+    Set.prototype.values = function() {
+      return this._data;
+    };
+    return Set;
+  })();
+
+  window.Lazyload = (function(doc) {
+    var queue = {js: [], css: []}, sources = {js: {}, css: {}}, context = this;
+    var createNode = function(name, attrs) {
+      var node = doc.createElement(name), attr;
+      for (attr in attrs) {
+        if (attrs.hasOwnProperty(attr)) {
+          node.setAttribute(attr, attrs[attr]);
+        }
+      }
+      return node;
+    };
+    var end = function(type, url) {
+      var s, q, qi, cbs, i, j, cur, val, flag;
+      if (type === 'js' || type ==='css') {
+        s = sources[type], q = queue[type];
+        s[url] = true;
+        for (i = 0; i < q.length; i++) {
+          cur = q[i];
+          if (cur.urls.has(url)) {
+            qi = cur, val = qi.urls.values();
+            qi && (cbs = qi.callbacks);
+            for (flag = true, j = 0; j < val.length; j++) {
+              cur = val[j];
+              if (!s[cur]) {
+                flag = false;
+              }
+            }
+            if (flag && cbs && cbs.length > 0) {
+              for (j = 0; j < cbs.length; j++) {
+                cbs[j].call(context);
+              }
+              qi.load = true;
+            }
+          }
+        }
+      }
+    };
+    var load = function(type, urls, callback) {
+      var s, q, qi, node, i, cur,
+        _urls = typeof urls === 'string' ? new Set([urls]) : new Set(urls), val, url;
+      if (type === 'js' || type ==='css') {
+        s = sources[type], q = queue[type];
+        for (i = 0; i < q.length; i++) {
+          cur = q[i];
+          if (_urls.is(cur.urls)) {
+            qi = cur;
+            break;
+          }
+        }
+        val = _urls.values();
+        if (qi) {
+          callback && (qi.load || qi.callbacks.push(callback));
+          callback && (qi.load && callback());
+        } else {
+          q.push({
+            urls: _urls,
+            callbacks: callback ? [callback] : [],
+            load: false
+          });
+          for (i = 0; i < val.length; i++) {
+            node = null, url = val[i];
+            if (s[url] === undefined) {
+              (type === 'js' ) && (node = createNode('script', { src: url }));
+              (type === 'css') && (node = createNode('link', { rel: 'stylesheet', href: url }));
+              if (node) {
+                node.onload = (function(type, url) {
+                  return function() {
+                    end(type, url);
+                  };
+                })(type, url);
+                (doc.head || doc.body).appendChild(node);
+                s[url] = false;
+              }
+            }
+          }
+        }
+      }
+    };
+    return {
+      js: function(url, callback) {
+        load('js', url, callback);
+      },
+      css: function(url, callback) {
+        load('css', url, callback);
+      }
+    };
+  })(this.document);
+})();
+</script><script>
+  (function() {
+    var TEXT_VARIABLES = {
+      version: '2.2.6',
+      sources: {
+        font_awesome: 'https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.1/css/all.css',
+        jquery: 'https://cdn.bootcss.com/jquery/3.1.1/jquery.min.js',
+        leancloud_js_sdk: '//cdn.jsdelivr.net/npm/leancloud-storage@3.13.2/dist/av-min.js',
+        chart: 'https://cdn.bootcss.com/Chart.js/2.7.2/Chart.bundle.min.js',
+        gitalk: {
+          js: 'https://cdn.bootcss.com/gitalk/1.2.2/gitalk.min.js',
+          css: 'https://cdn.bootcss.com/gitalk/1.2.2/gitalk.min.css'
+        },
+        valine: 'https://unpkg.com/valine/dist/Valine.min.js',
+        mathjax: 'https://cdn.bootcss.com/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML',
+        mermaid: 'https://cdn.bootcss.com/mermaid/8.0.0-rc.8/mermaid.min.js'
+      },
+      site: {
+        toc: {
+          selectors: 'h1,h2,h3'
+        }
+      },
+      paths: {
+        search_js: '/assets/search.js'
+      }
+    };
+    window.TEXT_VARIABLES = TEXT_VARIABLES;
+  })();
+</script>
+</head>
+  <body>
+    <div class="root" data-is-touch="false">
+      <div class="layout--page js-page-root"><div class="page__main js-page-main page__viewport has-aside cell cell--auto">
+
+      <div class="page__main-inner"><div class="page__header d-print-none"><header class="header"><div class="main">
+      <div class="header__title">
+        <div class="header__brand"><?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+ "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+ width="1280.000000pt" height="1026.000000pt" viewBox="0 0 1280.000000 1026.000000"
+ preserveAspectRatio="xMidYMid meet">
+<metadata>
+Created by potrace 1.15, written by Peter Selinger 2001-2017
+</metadata>
+<g transform="translate(0.000000,1026.000000) scale(0.100000,-0.100000)"
+fill="#000000" stroke="none">
+<path d="M5230 10251 c-54 -17 -109 -53 -190 -126 -99 -88 -148 -115 -213
+-115 -67 0 -118 24 -161 76 -45 53 -129 104 -174 104 -46 0 -113 -37 -217
+-119 -50 -40 -119 -86 -155 -104 -58 -29 -74 -32 -150 -32 -66 0 -96 5 -134
+23 -71 32 -174 31 -244 -4 -70 -35 -104 -90 -154 -250 l-41 -132 -38 -12 c-27
+-9 -74 -11 -156 -7 -70 3 -135 2 -160 -5 -97 -24 -173 -134 -174 -255 0 -96
+-13 -161 -35 -183 -13 -13 -56 -25 -139 -40 -173 -30 -203 -42 -280 -112 -111
+-102 -124 -145 -101 -335 9 -71 13 -144 10 -161 -16 -77 -418 -346 -518 -345
+-17 0 -64 12 -105 27 -179 67 -330 15 -440 -149 -44 -66 -111 -214 -111 -247
+0 -7 -36 -28 -79 -46 -43 -18 -97 -48 -118 -67 -36 -30 -41 -40 -46 -90 -6
+-64 -46 -158 -85 -199 -34 -36 -97 -65 -141 -66 l-34 0 7 93 c15 218 19 513 7
+567 -27 128 -71 175 -161 174 -81 -1 -160 -42 -209 -107 -143 -196 -243 -451
+-277 -712 -34 -251 4 -546 101 -805 21 -56 25 -85 28 -205 4 -198 22 -235 164
+-341 75 -56 129 -119 140 -163 18 -78 93 -173 158 -202 22 -10 75 -22 118 -28
+98 -14 130 -30 162 -84 20 -35 25 -57 25 -108 0 -117 29 -399 55 -523 57 -285
+169 -527 365 -792 l68 -91 11 -136 c25 -294 110 -503 262 -641 131 -118 276
+-168 489 -170 137 0 216 10 350 46 41 11 76 16 77 12 30 -88 150 -153 284
+-154 l46 0 5 -98 c4 -66 14 -121 32 -174 24 -72 25 -79 11 -130 -31 -120 -109
+-317 -186 -470 -17 -35 -93 -146 -169 -248 -170 -228 -234 -329 -370 -585
+-172 -326 -193 -382 -194 -515 0 -58 4 -104 12 -117 16 -28 100 -59 215 -79
+74 -13 136 -15 312 -11 271 7 478 37 663 98 73 24 69 16 75 184 3 66 10 132
+16 147 5 15 57 90 114 165 249 331 395 568 486 794 l23 55 82 0 c58 0 99 7
+146 23 48 17 78 22 113 17 62 -7 152 -56 223 -120 68 -62 79 -30 -96 -291
+-162 -243 -216 -340 -340 -608 -131 -285 -152 -346 -158 -468 -6 -131 5 -161
+66 -187 74 -32 153 -42 323 -42 162 0 304 15 489 51 113 23 315 81 360 104
+l28 15 4 153 3 153 114 174 c210 320 307 493 392 695 l38 90 103 6 c189 10
+241 56 322 282 22 59 65 103 117 119 35 10 53 8 132 -12 58 -14 133 -25 202
+-27 100 -4 114 -2 155 19 56 29 84 76 105 178 24 112 43 156 80 189 48 42 100
+47 200 21 208 -54 508 -75 965 -67 179 3 365 11 413 17 49 6 91 10 93 7 9 -9
+-37 -193 -81 -325 -24 -73 -73 -194 -108 -270 -55 -119 -83 -164 -202 -323
+-181 -240 -223 -307 -377 -594 -155 -292 -188 -376 -195 -500 -6 -110 3 -138
+56 -165 195 -99 743 -81 1127 37 95 29 94 26 94 177 1 145 5 156 148 348 361
+486 494 753 617 1237 23 93 25 116 25 345 0 135 4 247 8 250 15 9 120 -41 185
+-87 171 -122 288 -340 343 -639 21 -112 29 -408 15 -533 -10 -93 -92 -401
+-137 -517 -23 -56 -75 -142 -152 -248 -110 -152 -171 -292 -186 -430 -5 -42
+-3 -46 29 -68 53 -34 174 -71 292 -88 132 -20 463 -22 643 -5 272 27 365 65
+413 170 24 55 26 174 7 398 -16 181 -11 236 55 628 63 371 77 491 78 655 0
+225 -11 275 -108 470 -173 346 -209 457 -208 645 0 216 38 368 184 738 259
+657 333 954 355 1432 6 124 9 145 23 143 20 -4 43 -69 91 -253 92 -359 120
+-668 120 -1339 l0 -418 -85 -133 c-250 -392 -320 -660 -236 -900 13 -37 32
+-65 62 -92 101 -88 99 -86 99 -155 0 -49 -10 -94 -45 -196 -75 -220 -80 -329
+-21 -457 20 -44 36 -60 97 -102 126 -84 160 -155 179 -373 19 -221 45 -287
+152 -396 55 -56 74 -84 92 -135 13 -35 29 -65 35 -67 6 -2 43 28 81 67 89 90
+151 215 216 436 75 256 98 375 120 637 5 59 13 80 81 200 157 275 189 367 180
+506 -7 98 -34 198 -88 327 -38 93 -39 97 -39 222 -1 319 -31 371 -325 568
+-164 111 -164 110 -210 281 -58 212 -66 309 -75 944 -9 612 -10 628 -65 985
+-69 440 -188 714 -410 944 -138 143 -311 273 -530 399 -237 136 -561 475 -811
+847 -216 321 -474 774 -474 833 0 17 16 86 36 154 20 68 44 153 52 190 15 66
+15 66 -11 111 -36 62 -73 77 -186 77 -170 0 -246 35 -308 140 -69 118 -80 133
+-126 167 -66 48 -131 71 -254 88 -119 17 -157 31 -196 70 -41 41 -63 82 -86
+160 -26 84 -49 119 -107 163 -52 40 -118 62 -188 62 -28 0 -125 -18 -216 -40
+-172 -42 -220 -47 -266 -30 -14 6 -68 50 -119 98 -125 118 -182 146 -295 146
+-72 0 -101 -6 -193 -38 -103 -35 -111 -37 -163 -26 -30 7 -110 39 -177 73
+-117 60 -125 62 -197 62 -92 0 -151 -27 -255 -116 -69 -60 -70 -60 -121 -55
+-78 9 -108 23 -202 97 -132 105 -202 119 -367 73 -185 -53 -236 -45 -377 58
+-79 58 -156 99 -181 97 -7 0 -23 -4 -37 -8z"/>
+</g>
+</svg>
+<a title="Your Site Description
+" href="/">Blog - Hugues Gobet</a></div></div><nav class="navigation">
+        <ul><li class="navigation__item"><a href="/ddd-journey">DDD Journey</a></li><li class="navigation__item"><a href="/agojie-journey">Agojie Logbook</a></li><li class="navigation__item"><a href="/other">Other articles</a></li><li class="navigation__item"><a href="/about">About</a></li></ul>
+        <form id="language-switcher" action="" method="get">
+          <select name="lang" onchange="location = this.value;">
+            <option value="/fr/agojie-logbook/2026-10-19" >Français</option>
+            <option value="/agojie-logbook/2026-10-19" selected>English</option>
+          </select>
+        </form>
+        
+      </nav></div>
+  </header>
+</div><div class="page__content"><div class ="main"><div class="grid grid--reverse">
+
+              <div class="col-aside d-print-none js-col-aside"><aside class="page__aside js-page-aside"><div class="toc-aside js-toc-root">
+    <div class="sidebar-profile">
+        <img src="/assets/images/me.png" alt="Hugues Gobet" class="sidebar-avatar">
+        <h2 class="sidebar-name">Hugues Gobet</h2>
+
+        <p class="sidebar-bio">
+            
+                Web developer, lead developer, and software architecture enthusiast.
+            
+    </div>
+    <div class="sidebar-social">
+        <ul class="social-icons">
+            
+            <li>
+                <a href="https://medium.com/@hugues.gobet" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-medium"></i>
+                </a>
+            </li>
+            
+            
+            <li>
+                <a href="https://www.linkedin.com/in/hugues-gobet-854756bb/" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-linkedin"></i>
+                </a>
+            </li>
+            
+            
+            <li>
+                <a href="https://github.com/tegbessou" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-github"></i>
+                </a>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+</aside></div>
+
+              <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
+
+<!-- end custom main top snippet -->
+<article itemscope itemtype="http://schema.org/Article"><div class="article__header"><header><h1>The First Code, and What I Decided Not to Fix</h1></header></div><meta itemprop="headline" content="The First Code, and What I Decided Not to Fix"><div class="article__info clearfix"><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Oct 19, 2026</span>
+            </li></ul></div><meta itemprop="author" content="Hugues Gobet"/><meta itemprop="datePublished" content="2026-10-19T00:00:00+00:00"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
+
+<!-- end custom article top snippet -->
+<div class="article__content" itemprop="articleBody"><p><strong>Agojie</strong> automates <strong>Dice Throne</strong>, a turn-based fighting board game played with dice. In the previous episode, after three days, I still hadn’t written a single line of code. Four decisions had come out of those days, though: the shape of the model, the heroes’ defense, how the work was split into six slices, and the stack, in that order.</p>
+
+<h2 id="a-skeleton-that-walks">A Skeleton That Walks</h2>
+
+<p>The work is split into six <strong>vertical slices</strong>: pieces of the game delivered one at a time, each of which works end to end. The first one can do almost nothing. Two players start at 50 health points, they take turns, and whoever drops to zero loses. Attacks don’t exist yet: damage is a fixed, hard-coded value that the real attack will replace later.</p>
+
+<p>This bare minimum is deliberate. It’s the <strong>Walking Skeleton</strong> from the previous episode: the thinnest path that goes through the whole system and works. From there, each slice thickens that path instead of opening a new one.</p>
+
+<p>Unlike the fixed damage, what this skeleton sets up is here to stay: the game and its identity, the two fighters, their health points. Those health points are not an integer. They are a <strong>Value Object</strong>, in <em>Eric Evans</em>’s sense: an object defined by its value rather than by an identity, and which protects its own rule. This one refuses to go below zero or above the starting maximum. Its code appears further down, with the first flaw spotted during review.</p>
+
+<h3 id="checking-a-game-without-an-interface">Checking a Game Without an Interface</h3>
+
+<p>The previous episode raised the question without answering it in detail: how do you check all this when there is nothing on screen? The acceptance criteria of the skeleton are written as small games, with numbers:</p>
+
+<ul>
+  <li>B is at 5 health points and the turn’s damage is 5. A plays. B drops to zero, the game ends, A wins.</li>
+  <li>B is at 3 health points and the damage is 5. A plays. B is at zero, not at −2.</li>
+  <li>The game is over. Someone tries to play one more turn. The action is refused.</li>
+</ul>
+
+<p>These three sentences don’t describe code, they describe a game. That form is what makes it possible to deliver a slice without an interface: what gets checked is the game, not the implementation behind it.</p>
+
+<p>The third scenario is worth a closer look. Refusing to play after the game is over adds nothing to a player’s experience, since nobody clicks on a dead board. It’s a rule for the model, not for the screen. It says that a finished game is a final state, not a state the rest of the code is kindly asked to leave alone.</p>
+
+<h2 id="the-hero-doesnt-live-in-the-game">The Hero Doesn’t Live in the Game</h2>
+
+<p>Before touching the dice, one question was still open: where do a hero’s abilities live, along with their dice combinations and damage tables?</p>
+
+<p>The answer became an <strong>ADR</strong>, an <em>Architecture Decision Record</em>: a short note that records an architecture decision, its context and its consequences at the time it is made. <em>Michael Nygard</em> defined the format. The previous episode announced its content; here it is.</p>
+
+<p>The reasoning rests on one observation. A hero’s definition never changes during a game, whereas the state of that game changes with every hit taken.</p>
+
+<p>The decision: the hero is immutable catalog data, <strong>outside the game</strong>, referred to by an identifier. All the game knows about its fighters is that identifier. When a rule needs the definition, the application loads it and passes it to the game as a parameter. This is what <em>Vaughn Vernon</em> recommends in <em>Effective Aggregate Design</em>: refer to what lives outside by its identifier, and pass in the data that is needed instead of letting the game fetch it.</p>
+
+<p><img src="/assets/images/2026-10-19/frontiere-en.png" alt="The boundary between definition and state" /></p>
+
+<p>Three options were ruled out. Hard-coding the abilities: the Barbarian would be a class with its own methods, and every new hero would require writing engine code. Locking the hero inside the game: every saved game would carry a copy of the definition, and rebalancing a hero would mean fixing all of them. Injecting the catalog into the game: the game would fetch its own data and depend on an outside source, which is exactly what <strong>Hexagonal Architecture</strong>, chosen in the previous episode, aims to avoid.</p>
+
+<p>One point matters as much as the decision itself: the data carries its behavior. It is not an inert structure that something else interprets. It is the hero that knows which ability a dice combination triggers, and how much damage that ability deals. Without this, a third object would have had to do that work instead, and the game logic would have ended up far from the data it concerns.</p>
+
+<p>The decision has a cost. Every time a rule needs the hero, the application has to load it and then hand it to the game. That coordination step would not exist if the hero were locked inside the game.</p>
+
+<p>The catalog’s storage format, however, is still open. <strong><em>PHP</em></strong> objects, a file, a database: that is a question of wiring, not of modeling. For now, the heroes are <strong><em>PHP</em></strong> objects built by hand: they are data, not hero classes.</p>
+
+<h2 id="a-dice-rolling-machine">A Dice-Rolling Machine</h2>
+
+<p>Next comes the offensive roll. Five dice, free rerolls, three rolls at most. No ability is triggered yet, no damage is dealt: all you see is the final result of the dice.</p>
+
+<p><img src="/assets/images/2026-10-19/jets-en.png" alt="The three rolls of a turn" /></p>
+
+<p>Two rules govern this roll. At most three rolls per turn. And between rolls, the player rerolls exactly the dice they want, including a die they kept on the previous roll. That second rule is why the kept dice can’t be represented as a fixed set.</p>
+
+<p>On the application side, two <strong>Commands</strong> instead of one: roll and reroll. A <strong>Command</strong>, here, is the message that carries a player’s intent: “I roll my dice.” <em>Greg Young</em> made it the write side of CQRS, which separates the messages that change state from those that read it. It is received by an object that handles it, loads what it needs, and moves the game forward.</p>
+
+<p>I could have written a single <strong>Command</strong>, with a “which dice to reroll” parameter left empty on the first roll. I preferred two distinct intents. The first roll leaves no choice: all five dice go. The reroll, on the other hand, is a choice, and in fact the only one in the offensive phase. Merging them into a single message would have forced every reader to work out which of the two situations they were looking at. Two messages, two player actions, two names. Only the reroll carries the positions of the dice:</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+</pre></td><td class="code"><pre><span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">RollOffensiveDiceCommand</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="nv">$battleId</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{}</span>
+<span class="p">}</span>
+
+<span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">RerollOffensiveDiceCommand</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="n">__construct</span><span class="p">(</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="nv">$battleId</span><span class="p">,</span>
+        <span class="k">public</span> <span class="kt">array</span> <span class="nv">$positions</span><span class="p">,</span>
+    <span class="p">)</span> <span class="p">{}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>This also keeps the rules readable: “at most three rolls” is counted across both <strong>Commands</strong>, while “free rerolls” only concerns the second one.</p>
+
+<p>Chance goes through the dice <strong>Port</strong> introduced in the previous episode. In this slice, that <strong>Port</strong> becomes concrete. In the game, one implementation draws random faces on the server. In tests, another returns exactly the faces the scenario imposes. Here is the object that handles the roll <strong>Command</strong>. It loads the game, asks the <strong>Port</strong> for five faces, hands them to the game, then saves it:</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+</pre></td><td class="code"><pre><span class="k">public</span> <span class="k">function</span> <span class="n">handle</span><span class="p">(</span><span class="kt">RollOffensiveDiceCommand</span> <span class="nv">$command</span><span class="p">):</span> <span class="kt">void</span>
+<span class="p">{</span>
+    <span class="nv">$battle</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">repository</span><span class="o">-&gt;</span><span class="nf">find</span><span class="p">(</span><span class="nc">BattleId</span><span class="o">::</span><span class="nf">fromString</span><span class="p">(</span><span class="nv">$command</span><span class="o">-&gt;</span><span class="n">battleId</span><span class="p">));</span>
+    <span class="nv">$outcome</span> <span class="o">=</span> <span class="nc">DiceOutcome</span><span class="o">::</span><span class="nf">fromValues</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="n">diceRoller</span><span class="o">-&gt;</span><span class="nf">roll</span><span class="p">(</span><span class="k">self</span><span class="o">::</span><span class="no">DICE_COUNT</span><span class="p">));</span>
+    <span class="nv">$battle</span><span class="o">-&gt;</span><span class="nf">rollOffense</span><span class="p">(</span><span class="nv">$outcome</span><span class="p">);</span>
+    <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">repository</span><span class="o">-&gt;</span><span class="nf">save</span><span class="p">(</span><span class="nv">$battle</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>Neither this object nor the game knows which of the two implementations answered.</p>
+
+<h3 id="the-events-i-dont-write">The Events I Don’t Write</h3>
+
+<p>A <strong>Domain Event</strong> is a past fact of the domain that the business considers important enough to be given a name, and that another component of the system can listen to. The previous episode set a rule about them: no <strong>Domain Event</strong> without a subscriber. The skeleton and the dice-rolling machine give that rule its first chance to apply.</p>
+
+<p>There was no shortage of candidates. “The game is over” in the skeleton, “the dice were rolled” and “the dice were rerolled” in the dice-rolling machine. Three game facts, nameable, datable, exactly the expected shape.</p>
+
+<p>I wrote none of them. Nobody listens to them yet: no interface to refresh, no statistics to feed, no game history. An event without a subscriber adds nothing to the model. All it leaves behind is an object to maintain, and a question for the next reader about who uses it.</p>
+
+<p>They are written down on each slice as deferred candidates. When the interface arrives, in the second stage of the project, it will show which ones deserve to exist. This time, the answer won’t be an intuition: it will be a subscriber.</p>
+
+<h2 id="the-two-flaws-i-didnt-fix-right-away">The Two Flaws I Didn’t Fix Right Away</h2>
+
+<p>The reviews of these two slices caught two flaws. I fixed neither of them at the time.</p>
+
+<p>The first one concerns health points. The object does check its bounds when it is created, but the operation that applies damage doesn’t go through that check again:</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+</pre></td><td class="code"><pre><span class="k">final</span> <span class="k">readonly</span> <span class="kd">class</span> <span class="nc">HitPoints</span>
+<span class="p">{</span>
+    <span class="k">private</span> <span class="k">const</span> <span class="no">int</span> <span class="no">MAX</span> <span class="o">=</span> <span class="mi">50</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">static</span> <span class="k">function</span> <span class="n">fromValue</span><span class="p">(</span><span class="kt">int</span> <span class="nv">$value</span><span class="p">):</span> <span class="kt">self</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$value</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">||</span> <span class="nv">$value</span> <span class="o">&gt;</span> <span class="k">self</span><span class="o">::</span><span class="no">MAX</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nc">\InvalidArgumentException</span><span class="p">(</span><span class="s1">'Hit points out of bounds.'</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="k">new</span> <span class="nc">self</span><span class="p">(</span><span class="nv">$value</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="n">takeDamage</span><span class="p">(</span><span class="kt">int</span> <span class="nv">$amount</span><span class="p">):</span> <span class="kt">self</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nc">self</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="n">value</span> <span class="o">-</span> <span class="nv">$amount</span><span class="p">));</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p><strong><em>takeDamage</em></strong> builds its result directly, without going through <strong><em>fromValue</em></strong>. A negative amount would therefore push health points above 50. Nothing broke back then, because nothing added health points yet. The gap was bound to open when healing arrived. So I recorded the flaw on the slice for the defensive roll and healing, the first one that really exercises the upper bound.</p>
+
+<p>The second one concerns the rolling phase. Nothing prevented replaying the roll <strong>Command</strong> in the middle of a turn. The roll count then started over at one, and the three-roll limit could be bypassed. I recorded it on the next slice, the one that reads the dice combination. The deadline is written there in black and white, but as a condition rather than a slice number: “as soon as the turn sequence includes the real offense.” That condition was met when damage arrived, and that is where the flaw was closed. As for the first flaw, it was closed in two steps, with damage and then with healing.</p>
+
+<p>Postponing a known flaw is hard to defend. What makes it acceptable here is precisely what is usually missing: the flaw is recorded on a named slice, along with the reason for putting it there. It isn’t on a wish list, or only in my memory. And both were closed when their condition was met.</p>
+
+<p>A third review comment, however, was fixed right away. To reroll, the player points to the dice by their position in the roll: “the first and the fourth.” The game accepted a list of positions and a list of new faces of different lengths, and produced a technical error further down instead of a clear refusal. That wasn’t a debt to schedule, it was wrong behavior.</p>
+
+<h2 id="what-this-first-code-produced">What This First Code Produced</h2>
+
+<p>At this point, the game still can’t be played: turns alternate, the dice roll, and nobody attacks yet. What is in place is a boundary between definition and state, and two game rules that hold on their own in the code.</p>
+
+<p>In the next episode, the real heroes enter the code: the dice point to an ability, and the attack finally deals its damage. The previous episode showed how a detail found on a card corrected the specification. This time, it isn’t the specification that moves but the model: an <strong>Invariant</strong> had been living in the wrong place since the dice-rolling machine, and a hero sheet moved it.</p>
+
+<p>Feel free to comment on this article, whether about the modeling or about the way I tell the project’s story.</p>
+
+<p>See you soon for a new episode.</p>
+</div><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2026-10-19T00:00:00+00:00"><!-- start custom article footer snippet -->
+
+<!-- end custom article footer snippet -->
+</footer>
+<div class="article__section-navigator clearfix"><div class="previous"><span>PREVIOUS</span><a href="/agojie-logbook/2026-09-14">Three Days Before the First Line of Code</a></div></div></div>
+
+</div>
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    $(function() {
+      var $this ,$scroll;
+      var $articleContent = $('.js-article-content');
+      var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+      var scroll = hasSidebar ? '.js-page-main' : 'html, body';
+      $scroll = $(scroll);
+
+      $articleContent.find('.highlight').each(function() {
+        $this = $(this);
+        $this.attr('data-lang', $this.find('code').attr('data-lang'));
+      });
+      $articleContent.find('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]').each(function() {
+        $this = $(this);
+        $this.append($('<a class="anchor d-print-none" aria-hidden="true"></a>').html('<i class="fas fa-anchor"></i>'));
+      });
+      $articleContent.on('click', '.anchor', function() {
+        $scroll.scrollToAnchor('#' + $(this).parent().attr('id'), 400);
+      });
+    });
+  });
+})();
+</script>
+</div><section class="page__comments d-print-none"></section></article><!-- start custom main bottom snippet -->
+
+<!-- end custom main bottom snippet -->
+</div>
+            </div></div></div><div class="page__footer d-print-none">
+<footer class="footer py-4 js-page-footer">
+  <div class="main"><div itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Hugues Gobet"><meta itemprop="url" content="https://huguesgobet.com"><meta itemprop="description" content="Développeur web, lead développeur et passionné d'architecture logicielle."><div class="footer__author-links"><div class="author-links">
+  <ul class="menu menu--nowrap menu--inline"><link itemprop="url" href="https://huguesgobet.com"><li title="Send me an Email.">
+      <a class="button button--circle mail-button" itemprop="email" href="mailto:hugues.gobet@gmail.com" target="_blank">
+        <i class="fas fa-envelope"></i>
+      </a><li title="Follow me on Medium.">
+        <a class="button button--circle medium-button" itemprop="sameAs" href="https://medium.com/https://medium.com/@hugues.gobet" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M834.7 279.8l61.3-58.9V208H683.7L532.4 586.4 360.3 208H137.7v12.9l71.6 86.6c7 6.4 10.6 15.8 9.7 25.2V673c2.2 12.3-1.7 24.8-10.3 33.7L128 805v12.7h228.6v-12.9l-80.6-98a39.99 39.99 0 0 1-11.1-33.7V378.7l200.7 439.2h23.3l172.6-439.2v349.9c0 9.2 0 11.1-6 17.2l-62.1 60.3V819h301.2v-12.9l-59.9-58.9c-5.2-4-7.9-10.7-6.8-17.2V297a18.1 18.1 0 0 1 6.8-17.2z"></path>
+</svg>
+</div>
+        </a>
+      </li><li title="Follow me on Linkedin.">
+        <a class="button button--circle linkedin-button" itemprop="sameAs" href="https://www.linkedin.com/in/https://www.linkedin.com/in/hugues-gobet-854756bb/" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M260.096 155.648c0 27.307008-9.899008 50.516992-29.696 69.632-19.796992 19.115008-45.396992 28.672-76.8 28.672-30.036992 0-54.612992-9.556992-73.728-28.672-19.115008-19.115008-28.672-42.324992-28.672-69.632 0-28.672 9.556992-52.224 28.672-70.656 19.115008-18.432 44.372992-27.648 75.776-27.648 31.403008 0 56.32 9.216 74.752 27.648 18.432 18.432 28.331008 41.984 29.696 70.656 0 0 0 0 0 0m-202.752 808.96c0 0 0-632.832 0-632.832 0 0 196.608 0 196.608 0 0 0 0 632.832 0 632.832 0 0-196.608 0-196.608 0 0 0 0 0 0 0m313.344-430.08c0-58.708992-1.364992-126.292992-4.096-202.752 0 0 169.984 0 169.984 0 0 0 10.24 88.064 10.24 88.064 0 0 4.096 0 4.096 0 40.96-68.267008 105.812992-102.4 194.56-102.4 68.267008 0 123.220992 22.868992 164.864 68.608 41.643008 45.739008 62.464 113.664 62.464 203.776 0 0 0 374.784 0 374.784 0 0-196.608 0-196.608 0 0 0 0-350.208 0-350.208 0-91.476992-33.451008-137.216-100.352-137.216-47.787008 0-81.236992 24.576-100.352 73.728-4.096 8.192-6.144 24.576-6.144 49.152 0 0 0 364.544 0 364.544 0 0-198.656 0-198.656 0 0 0 0-430.08 0-430.08 0 0 0 0 0 0" />
+</svg>
+</div>
+        </a>
+      </li><li title="Follow me on Github.">
+        <a class="button button--circle github-button" itemprop="sameAs" href="https://github.com/https://github.com/tegbessou" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path class="svgpath" data-index="path_0" fill="#272636" d="M0 525.2c0 223.6 143.3 413.7 343 483.5 26.9 6.8 22.8-12.4 22.8-25.4l0-88.7c-155.3 18.2-161.5-84.6-172-101.7-21.1-36-70.8-45.2-56-62.3 35.4-18.2 71.4 4.6 113.1 66.3 30.2 44.7 89.1 37.2 119 29.7 6.5-26.9 20.5-50.9 39.7-69.6C248.8 728.2 181.7 630 181.7 513.2c0-56.6 18.7-108.7 55.3-150.7-23.3-69.3 2.2-128.5 5.6-137.3 66.5-6 135.5 47.6 140.9 51.8 37.8-10.2 80.9-15.6 129.1-15.6 48.5 0 91.8 5.6 129.8 15.9 12.9-9.8 77-55.8 138.8-50.2 3.3 8.8 28.2 66.7 6.3 135 37.1 42.1 56 94.6 56 151.4 0 117-67.5 215.3-228.8 243.7 26.9 26.6 43.6 63.4 43.6 104.2l0 128.8c0.9 10.3 0 20.5 17.2 20.5C878.1 942.4 1024 750.9 1024 525.3c0-282.9-229.3-512-512-512C229.1 13.2 0 242.3 0 525.2L0 525.2z" />
+</svg>
+</div>
+        </a>
+      </li></ul>
+</div>
+</div>
+    </div><div class="site-info mt-2">
+      <div>© Blog - Hugues Gobet 2021,
+        Powered by <a title="Jekyll is a simple, blog-aware, static site generator." href="http://jekyllrb.com/">Jekyll</a> & <a
+        title="TeXt is a super customizable Jekyll theme." href="https://github.com/kitian616/jekyll-TeXt-theme">TeXt Theme</a>.
+      </div>
+    </div>
+  </div>
+</footer>
+</div></div>
+    </div><script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $body = $('body'), $window = $(window);
+    var $pageRoot = $('.js-page-root'), $pageMain = $('.js-page-main');
+    var activeCount = 0;
+    function modal(options) {
+      var $root = this, visible, onChange, hideWhenWindowScroll = false;
+      var scrollTop;
+      function setOptions(options) {
+        var _options = options || {};
+        visible = _options.initialVisible === undefined ? false : show;
+        onChange = _options.onChange;
+        hideWhenWindowScroll = _options.hideWhenWindowScroll;
+      }
+      function init() {
+        setState(visible);
+      }
+      function setState(isShow) {
+        if (isShow === visible) {
+          return;
+        }
+        visible = isShow;
+        if (visible) {
+          activeCount++;
+          scrollTop = $(window).scrollTop() || $pageMain.scrollTop();
+          $root.addClass('modal--show');
+          $pageMain.scrollTop(scrollTop);
+          activeCount === 1 && ($pageRoot.addClass('show-modal'), $body.addClass('of-hidden'));
+          hideWhenWindowScroll && window.hasEvent('touchstart') && $window.on('scroll', hide);
+          $window.on('keyup', handleKeyup);
+        } else {
+          activeCount > 0 && activeCount--;
+          $root.removeClass('modal--show');
+          $window.scrollTop(scrollTop);
+          activeCount === 0 && ($pageRoot.removeClass('show-modal'), $body.removeClass('of-hidden'));
+          hideWhenWindowScroll && window.hasEvent('touchstart') && $window.off('scroll', hide);
+          $window.off('keyup', handleKeyup);
+        }
+        onChange && onChange(visible);
+      }
+      function show() {
+        setState(true);
+      }
+      function hide() {
+        setState(false);
+      }
+      function handleKeyup(e) {
+        // Char Code: 27  ESC
+        if (e.which ===  27) {
+          hide();
+        }
+      }
+      setOptions(options);
+      init();
+      return {
+        show: show,
+        hide: hide,
+        $el: $root
+      };
+    }
+    $.fn.modal = modal;
+  });
+})();
+</script><div class="modal modal--overflow page__search-modal d-print-none js-page-search-modal"></div></div>
+
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function scrollToAnchor(anchor, duration, callback) {
+      var $root = this;
+      $root.animate({ scrollTop: $(anchor).position().top }, duration, function() {
+        window.history.replaceState(null, '', window.location.href.split('#')[0] + anchor);
+        callback && callback();
+      });
+    }
+    $.fn.scrollToAnchor = scrollToAnchor;
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function affix(options) {
+      var $root = this, $window = $(window), $scrollTarget, $scroll,
+        offsetBottom = 0, scrollTarget = window, scroll = window.document, disabled = false, isOverallScroller = true,
+        rootTop, rootLeft, rootHeight, scrollBottom, rootBottomTop,
+        hasInit = false, curState;
+
+      function setOptions(options) {
+        var _options = options || {};
+        _options.offsetBottom && (offsetBottom = _options.offsetBottom);
+        _options.scrollTarget && (scrollTarget = _options.scrollTarget);
+        _options.scroll && (scroll = _options.scroll);
+        _options.disabled !== undefined && (disabled = _options.disabled);
+        $scrollTarget = $(scrollTarget);
+        isOverallScroller = window.isOverallScroller($scrollTarget[0]);
+        $scroll = $(scroll);
+      }
+      function preCalc() {
+        top();
+        rootHeight = $root.outerHeight();
+        rootTop = $root.offset().top + (isOverallScroller ? 0 :  $scrollTarget.scrollTop());
+        rootLeft = $root.offset().left;
+      }
+      function calc(needPreCalc) {
+        needPreCalc && preCalc();
+        scrollBottom = $scroll.outerHeight() - offsetBottom - rootHeight;
+        rootBottomTop = scrollBottom - rootTop;
+      }
+      function top() {
+        if (curState !== 'top') {
+          $root.removeClass('fixed').css({
+            left: 0,
+            top: 0
+          });
+          curState = 'top';
+        }
+      }
+      function fixed() {
+        if (curState !== 'fixed') {
+          $root.addClass('fixed').css({
+            left: rootLeft + 'px',
+            top: 0
+          });
+          curState = 'fixed';
+        }
+      }
+      function bottom() {
+        if (curState !== 'bottom') {
+          $root.removeClass('fixed').css({
+            left: 0,
+            top: rootBottomTop + 'px'
+          });
+          curState = 'bottom';
+        }
+      }
+      function setState() {
+        var scrollTop = $scrollTarget.scrollTop();
+        if (scrollTop >= rootTop && scrollTop <= scrollBottom) {
+          fixed();
+        } else if (scrollTop < rootTop) {
+          top();
+        } else {
+          bottom();
+        }
+      }
+      function init() {
+        if(!hasInit) {
+          var interval, timeout;
+          calc(true); setState();
+          // run calc every 100 millisecond
+          interval = setInterval(function() {
+            calc();
+          }, 100);
+          timeout = setTimeout(function() {
+            clearInterval(interval);
+          }, 45000);
+          window.pageLoad.then(function() {
+            setTimeout(function() {
+              clearInterval(interval);
+              clearTimeout(timeout);
+            }, 3000);
+          });
+          $scrollTarget.on('scroll', function() {
+            disabled || setState();
+          });
+          $window.on('resize', function() {
+            disabled || (calc(true), setState());
+          });
+          hasInit = true;
+        }
+      }
+
+      setOptions(options);
+      if (!disabled) {
+        init();
+      }
+      $window.on('resize', window.throttle(function() {
+        init();
+      }, 200));
+      return {
+        setOptions: setOptions,
+        refresh: function() {
+          calc(true, { animation: false }); setState();
+        }
+      };
+    }
+    $.fn.affix = affix;
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function toc(options) {
+      var $root = this, $window = $(window), $scrollTarget, $scroller, $tocUl = $('<ul class="toc toc--ellipsis"></ul>'), $tocLi, $headings, $activeLast, $activeCur,
+        selectors = 'h1,h2,h3', container = 'body', scrollTarget = window, scroller = 'html, body', disabled = false,
+        headingsPos, scrolling = false, hasRendered = true, hasInit = false;
+
+      function setOptions(options) {
+        var _options = options || {};
+        _options.selectors && (selectors = _options.selectors);
+        _options.container && (container = _options.container);
+        _options.scrollTarget && (scrollTarget = _options.scrollTarget);
+        _options.scroller && (scroller = _options.scroller);
+        _options.disabled !== undefined && (disabled = _options.disabled);
+        $headings = $(container).find(selectors).filter('[id]');
+        $scrollTarget = $(scrollTarget);
+        $scroller = $(scroller);
+      }
+      function calc() {
+        headingsPos = [];
+        $headings.each(function() {
+          headingsPos.push(Math.floor($(this).position().top));
+        });
+      }
+      function setState(element, disabled) {
+        var scrollTop = $scrollTarget.scrollTop(), i;
+        if (disabled || !headingsPos || headingsPos.length < 1) { return; }
+        if (element) {
+          $activeCur = element;
+        } else {
+          for (i = 0; i < headingsPos.length; i++) {
+            if (scrollTop >= headingsPos[i]) {
+              $activeCur = $tocLi.eq(i);
+            } else {
+              $activeCur || ($activeCur = $tocLi.eq(i));
+              break;
+            }
+          }
+        }
+        $activeLast && $activeLast.removeClass('active');
+        ($activeLast = $activeCur).addClass('active');
+      }
+      function render() {
+        if(!hasRendered) {
+          $root.append($tocUl);
+          $headings.each(function() {
+            var $this = $(this);
+            $tocUl.append($('<li></li>').addClass('toc-' + $this.prop('tagName').toLowerCase())
+              .append($('<a></a>').text($this.text()).attr('href', '#' + $this.prop('id'))));
+          });
+          $tocLi = $tocUl.children('li');
+          $tocUl.on('click', 'a', function(e) {
+            e.preventDefault();
+            var $this = $(this);
+            scrolling = true;
+            setState($this.parent());
+            $scroller.scrollToAnchor($this.attr('href'), 400, function() {
+              scrolling = false;
+            });
+          });
+        }
+        hasRendered = true;
+      }
+      function init() {
+        var interval, timeout;
+        if(!hasInit) {
+          render(); calc(); setState(null, scrolling);
+          // run calc every 100 millisecond
+          interval = setInterval(function() {
+            calc();
+          }, 100);
+          timeout = setTimeout(function() {
+            clearInterval(interval);
+          }, 45000);
+          window.pageLoad.then(function() {
+            setTimeout(function() {
+              clearInterval(interval);
+              clearTimeout(timeout);
+            }, 3000);
+          });
+          $scrollTarget.on('scroll', function() {
+            disabled || setState(null, scrolling);
+          });
+          $window.on('resize', window.throttle(function() {
+            if (!disabled) {
+              render(); calc(); setState(null, scrolling);
+            }
+          }, 100));
+        }
+        hasInit = true;
+      }
+
+      setOptions(options);
+      if (!disabled) {
+        init();
+      }
+      $window.on('resize', window.throttle(function() {
+        init();
+      }, 200));
+      return {
+        setOptions: setOptions
+      };
+    }
+    $.fn.toc = toc;
+  });
+})();
+/*(function () {
+
+})();*/
+</script><script>
+  /* toc must before affix, since affix need to konw toc' height. */(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  var TOC_SELECTOR = window.TEXT_VARIABLES.site.toc.selectors;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window);
+    var $articleContent = $('.js-article-content');
+    var $tocRoot = $('.js-toc-root'), $col2 = $('.js-col-aside');
+    var toc;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+    var hasToc = $articleContent.find(TOC_SELECTOR).length > 0;
+
+    function disabled() {
+      return $col2.css('display') === 'none' || !hasToc;
+    }
+
+    tocDisabled = disabled();
+
+    toc = $tocRoot.toc({
+      selectors: TOC_SELECTOR,
+      container: $articleContent,
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      tocDisabled = disabled();
+      toc && toc.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window), $pageFooter = $('.js-page-footer');
+    var $pageAside = $('.js-page-aside');
+    var affix;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+
+    affix = $pageAside.affix({
+      offsetBottom: $pageFooter.outerHeight(),
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      scroll: hasSidebar ? $('.js-page-main').children() : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      affix && affix.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+    window.pageAsideAffix = affix;
+  });
+})();
+</script><script>
+  window.Lazyload.js('https://cdn.bootcss.com/mermaid/8.0.0-rc.8/mermaid.min.js', function() {
+    mermaid.initialize({
+      startOnLoad: true
+    });
+    mermaid.init(undefined, '.language-mermaid');
+  });
+</script>
+
+    </div>
+    <script>(function () {
+  var $root = document.getElementsByClassName('root')[0];
+  if (window.hasEvent('touchstart')) {
+    $root.dataset.isTouch = true;
+    document.addEventListener('touchstart', function(){}, false);
+  }
+})();
+</script>
+  </body>
+</html>
+
